@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Claude Projects</title>
+<meta name="description" content="Projects designed and built with Claude. First up: Resume Gauntlet, an ATS screen and four-reviewer panel that walks you through fixing your resume.">
+<meta property="og:title" content="Claude Projects">
+<meta property="og:description" content="Resume Gauntlet: screen your resume like an ATS, then face an interviewer, a rival applicant, a field expert and an executive.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#EDF0F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E131B" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232E3DA6'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='monospace' font-weight='700' font-size='15' fill='%23fff'%3E001%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Same tokens as resume-gauntlet/index.html: the hub is filed in the app's own docket. */
+:root {
+  --bg: #EDF0F5;
+  --surface: #FFFFFF;
+  --sunken: #F5F7FA;
+  --ink: #131A25;
+  --body: #38425A;
+  --muted: #586377;
+  --line: #D3D9E3;
+  --accent: #2E3DA6;
+  --accent-soft: #E4E7FA;
+  --accent-ink: #FFFFFF;
+  --hl: #FFE36A;
+  --hl-ink: #131A25;
+  --ok: #17704A; --ok-bg: #E1F3E9;
+  --bad: #B42318; --bad-bg: #FCE5E2;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --radius: 10px;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --gutter: clamp(16px, 5vw, 72px);
+  color-scheme: light;
+  interpolate-size: allow-keywords;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E131B; --surface: #161E2B; --sunken: #111823; --ink: #E5EAF2; --body: #C3CBD8; --muted: #98A4B7; --line: #283346;
+    --accent: #8E9CFF; --accent-soft: #232C52; --accent-ink: #0E131B; --hl: #6B5A12; --hl-ink: #FFF6CF;
+    --ok: #63D296; --ok-bg: #12301F; --bad: #FF8A80; --bad-bg: #3A1614;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E131B; --surface: #161E2B; --sunken: #111823; --ink: #E5EAF2; --body: #C3CBD8; --muted: #98A4B7; --line: #283346;
+  --accent: #8E9CFF; --accent-soft: #232C52; --accent-ink: #0E131B; --hl: #6B5A12; --hl-ink: #FFF6CF;
+  --ok: #63D296; --ok-bg: #12301F; --bad: #FF8A80; --bad-bg: #3A1614;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.55;
+  padding: 0 max(var(--gutter), env(safe-area-inset-left, 0px)) 0 max(var(--gutter), env(safe-area-inset-right, 0px));
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: var(--hl); color: var(--hl-ink); }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.08; }
+p { margin: 0; }
+a { color: var(--accent); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+code { font-family: var(--font-mono); font-size: .86em; background: var(--sunken); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; }
+mark { background: var(--hl); color: var(--hl-ink); padding: 0 3px; border-radius: 2px; }
+.wrap { max-width: 1240px; margin: 0 auto; }
+.mono { font-family: var(--font-mono); }
+.icon { width: 18px; height: 18px; flex: none; }
+
+/* Masthead */
+.mast {
+  display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px 40px;
+  padding: clamp(32px, 6vw, 64px) 0 22px; border-bottom: 2px solid var(--ink);
+}
+.mast h1 { font-size: clamp(44px, 7vw, 88px); font-weight: 800; letter-spacing: -0.035em; line-height: .95; }
+.mast-side { display: grid; gap: 12px; justify-items: start; max-width: 30em; }
+.mast-side p { color: var(--body); font-size: 19px; }
+.mast-side a { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+
+/* Ledger */
+.cols, .entry > summary {
+  display: grid; grid-template-columns: 104px minmax(0, 1.1fr) minmax(0, 1.4fr) 200px 28px; gap: 24px; align-items: center;
+}
+.cols { padding: 14px 0 10px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line); }
+.cols span:last-child { visibility: hidden; }
+.entry > summary {
+  list-style: none; cursor: pointer; padding: 22px 0; border-bottom: 1px solid var(--line);
+  transition: background-color 150ms ease;
+}
+.entry > summary::-webkit-details-marker { display: none; }
+.case { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--muted); }
+.entry[open] .case { color: var(--accent); }
+.entry > summary .name { font-family: var(--font-display); font-size: clamp(24px, 2.6vw, 32px); font-weight: 700; letter-spacing: -0.015em; }
+.entry > summary .what { color: var(--body); }
+.entry > summary .stack { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+.chev { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; color: var(--muted); transition: transform 300ms var(--ease-out), border-color 150ms ease; }
+.entry[open] .chev { transform: rotate(180deg); border-color: var(--accent); color: var(--accent); }
+@media (hover: hover) and (pointer: fine) { .entry > summary:hover .chev { border-color: var(--accent); color: var(--accent); } }
+.entry::details-content { height: 0; overflow: clip; transition: height 520ms var(--ease-out), content-visibility 520ms allow-discrete; }
+.entry[open]::details-content { height: auto; }
+@media (prefers-reduced-motion: reduce) { .entry::details-content { transition: none; } }
+
+.next {
+  display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 24px; align-items: center;
+  margin: 20px 0 0; padding: 20px 0; border: 1.5px dashed var(--line); border-radius: 12px; padding-inline: 20px;
+}
+.next p { color: var(--muted); }
+
+/* The open file */
+.file { display: grid; gap: clamp(48px, 7vw, 96px); padding: 24px 0 clamp(48px, 7vw, 88px); }
+.sheet { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: clamp(22px, 4vw, 48px); }
+.lead { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 72px); align-items: start; }
+.lead h2 { font-size: clamp(34px, 4.4vw, 58px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.02; }
+.lead .lede { margin-top: 20px; font-size: 19px; color: var(--body); max-width: 34em; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 9px; padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 16px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); text-decoration: none; cursor: pointer;
+  transition: transform 160ms var(--ease-out), border-color 150ms ease, filter 150ms ease;
+}
+.btn:active { transform: scale(0.97); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary:hover { filter: brightness(1.08); }
+}
+.note { margin-top: 18px; font-size: 15px; color: var(--muted); max-width: 36em; }
+
+.desks { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.desks li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; padding: 12px; border-radius: var(--radius); }
+.desks li:first-child { background: var(--sunken); }
+.desk-num {
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+  border: 1.5px solid var(--accent); color: var(--accent); background: var(--surface);
+}
+.desks strong { display: block; font-size: 17px; }
+.desks div > span { display: block; color: var(--muted); font-size: 15px; }
+
+/* Section heads inside the file */
+.part { display: grid; gap: 28px; }
+.part-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 48px; align-items: end; }
+.part-head h2 { font-size: clamp(28px, 3.4vw, 42px); font-weight: 800; letter-spacing: -0.025em; }
+.part-head p { color: var(--body); max-width: 36em; }
+
+/* Sample markup */
+.sample { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 0; padding: 0; overflow: hidden; }
+.sample-src { padding: clamp(22px, 4vw, 40px); border-right: 1px solid var(--line); display: grid; gap: 14px; align-content: start; }
+.label { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.src-line { font-size: 21px; line-height: 1.45; }
+.rewrite { margin-top: 18px; padding-top: 22px; border-top: 1px dashed var(--line); display: grid; gap: 10px; }
+.rewrite p:last-child { font-size: 21px; line-height: 1.5; font-weight: 600; }
+.ph { font-family: var(--font-mono); font-size: .78em; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+.flags { list-style: none; margin: 0; padding: 0; }
+.flags li { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 14px; padding: 18px clamp(22px, 3vw, 32px); border-bottom: 1px solid var(--line); }
+.flags li:last-child { border-bottom: 0; }
+.mono-badge { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); font-family: var(--font-mono); font-weight: 600; font-size: 14px; }
+.flags b { font-family: var(--font-display); font-size: 17px; }
+.flags p { color: var(--body); }
+
+/* Panel */
+.panel { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--ink); }
+.panel li { display: grid; grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px 28px; padding: 26px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.panel .mono-badge { width: 48px; height: 48px; font-size: 18px; }
+.panel h3 { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
+.panel .role { color: var(--muted); font-size: 15px; margin-top: 4px; }
+.panel .temper { color: var(--body); }
+.criteria { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 15px; }
+.criteria li { display: flex; justify-content: space-between; gap: 12px; padding: 0; border: 0; }
+.criteria .w { font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Math */
+.math { display: grid; gap: 36px; }
+.eq { display: flex; flex-wrap: wrap; align-items: end; gap: 20px clamp(20px, 3vw, 40px); }
+.term { display: grid; gap: 4px; }
+.term b { font-family: var(--font-mono); font-size: clamp(34px, 4.6vw, 60px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.term small { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.op { font-weight: 400; color: var(--muted); margin-right: .12em; }
+.term.minus b { color: var(--bad); }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 48px; margin: 0; padding: 0; list-style: none; }
+.rules li { padding: 16px 0; border-top: 1px solid var(--line); color: var(--body); }
+.rules strong { color: var(--ink); }
+
+/* Setup */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: step; }
+.steps > li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 18px; padding: 22px 0; border-top: 1px solid var(--line); counter-increment: step; }
+.steps > li:first-child { border-top: 0; padding-top: 0; }
+.steps > li::before {
+  content: counter(step); width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--font-mono); font-weight: 600; font-size: 14px; border: 1.5px solid var(--accent); color: var(--accent);
+}
+.steps h3 { font-size: 20px; font-weight: 700; }
+.steps p { color: var(--body); margin-top: 6px; max-width: 62ch; }
+.cmd {
+  margin-top: 12px; display: flex; align-items: stretch; background: var(--ink); color: #E5EAF2; border-radius: 8px; overflow: hidden; max-width: 680px;
+}
+:root[data-theme="dark"] .cmd { background: var(--sunken); border: 1px solid var(--line); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cmd { background: var(--sunken); border: 1px solid var(--line); } }
+.cmd code { background: none; border: 0; padding: 0; font-size: inherit; color: inherit; }
+.cmd pre { margin: 0; padding: 12px 16px; flex: 1; overflow-x: auto; font-family: var(--font-mono); font-size: 14px; line-height: 1.6; scrollbar-width: thin; }
+.copy {
+  flex: none; border: 0; border-left: 1px solid rgba(255,255,255,.14); background: transparent; color: inherit; cursor: pointer;
+  font-family: var(--font-mono); font-size: 12px; padding: 0 14px; min-width: 76px; transition: background-color 150ms ease;
+}
+.copy:hover { background: rgba(255,255,255,.08); }
+.copy[data-done] { color: #63D296; }
+.cfg { width: 100%; border-collapse: collapse; font-size: 15px; margin-top: 8px; }
+.cfg th { text-align: left; font-family: var(--font-mono); font-size: 12px; font-weight: 400; color: var(--muted); padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line); }
+.cfg td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--body); }
+.cfg-wrap { overflow-x: auto; }
+
+/* Trust */
+.trust { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(24px, 4vw, 48px); }
+.trust h3 { font-size: 20px; font-weight: 700; padding-bottom: 12px; border-bottom: 2px solid var(--ink); }
+.trust ul { margin: 14px 0 0; padding: 0 0 0 18px; color: var(--body); display: grid; gap: 8px; }
+
+footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 32px; padding: 28px 0 calc(40px + env(safe-area-inset-bottom, 0px)); margin-top: 56px; border-top: 2px solid var(--ink); color: var(--muted); font-size: 15px; }
+
+@media (max-width: 960px) {
+  .cols { display: none; }
+  .entry > summary { grid-template-columns: minmax(0, 1fr) 28px; gap: 4px 16px; }
+  .entry > summary .case { grid-column: 1; }
+  .entry > summary .name { grid-column: 1; }
+  .entry > summary .what, .entry > summary .stack { grid-column: 1; }
+  .entry > summary .chev { grid-column: 2; grid-row: 1 / span 4; align-self: center; }
+  .lead, .part-head, .sample { grid-template-columns: minmax(0, 1fr); }
+  .sample-src { border-right: 0; border-bottom: 1px solid var(--line); }
+  .panel li { grid-template-columns: 48px minmax(0, 1fr); }
+  .panel .temper, .panel .criteria { grid-column: 2; }
+  .rules, .trust { grid-template-columns: minmax(0, 1fr); }
+  .next { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}
+@media (max-width: 600px) {
+  .steps > li { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .copy { min-width: 60px; padding: 0 10px; }
+  .eq { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast">
+    <h1>Claude Projects</h1>
+    <div class="mast-side">
+      <p>Projects I designed and built with Claude. Each one is filed with its source code and setup steps.</p>
+      <a href="https://github.com/Brax10jns/Claude-Projects">
+        <svg class="icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.71 1.23 1.87.87 2.33.67.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        Brax10jns/Claude-Projects
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <div class="cols" aria-hidden="true"><span>No.</span><span>Project</span><span>What it does</span><span>Built with</span><span></span></div>
+
+    <details class="entry" id="resume-gauntlet" open>
+      <summary>
+        <span class="case">No. 001</span>
+        <span class="name">Resume Gauntlet</span>
+        <span class="what">ATS screen, then a four-reviewer panel, then a guided fix</span>
+        <span class="stack">Node · Claude API · vanilla JS</span>
+        <span class="chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 6 4 4 4-4"/></svg></span>
+      </summary>
+
+      <div class="file">
+        <section class="sheet lead" aria-labelledby="rg-title">
+          <div>
+            <h2 id="rg-title">Your resume, read by an ATS and four tough reviewers.</h2>
+            <p class="lede">Resume Gauntlet screens a resume the way an applicant tracking system would, rewrites it to pass without inventing anything, then puts it in front of an interviewer, a rival applicant, a field expert and an executive. It ends with a resume you've fixed line by line.</p>
+            <div class="actions">
+              <a class="btn primary" href="#setup">
+                Run it locally
+                <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v10M3.5 8.5 8 13l4.5-4.5"/></svg>
+              </a>
+              <a class="btn" href="https://github.com/Brax10jns/Claude-Projects/tree/main/resume-gauntlet">
+                View source
+                <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h7v7M13 3 4 12"/></svg>
+              </a>
+            </div>
+            <p class="note">It runs on your machine with your own Anthropic API key, so there's no hosted demo here. Setup takes about five minutes.</p>
+          </div>
+          <ol class="desks" aria-label="The four stages">
+            <li><span class="desk-num">1</span><div><strong>ATS screen</strong><span>Parse checks, required keywords verified against your text, measurable results and knockouts. Fails get rewritten and screened again, up to twice.</span></div></li>
+            <li><span class="desk-num">2</span><div><strong>Review panel</strong><span>Four reviewers, each with a temperament, weighted criteria and questions tied to specific lines.</span></div></li>
+            <li><span class="desk-num">3</span><div><strong>Fix</strong><span>Pick which flags to apply, fill in the details only you know, answer the reviewers' questions.</span></div></li>
+            <li><span class="desk-num">4</span><div><strong>Final resume</strong><span>Edit by hand, find blind spots, download a PDF or text file, or run the gauntlet again.</span></div></li>
+          </ol>
+        </section>
+
+        <section class="part" aria-labelledby="sample-title">
+          <div class="part-head">
+            <h2 id="sample-title">One weak bullet, four readers</h2>
+            <p>A line from the app's built-in sample resume, and the kind of pushback each reviewer gives it. The rewrite keeps the facts it has and leaves placeholders for the ones only you know.</p>
+          </div>
+          <div class="sheet sample">
+            <div class="sample-src">
+              <p class="label">Sample resume · Data Analyst, 2021 to present</p>
+              <p class="src-line">• <mark>Responsible for</mark> creating reports for the operations team</p>
+              <div class="rewrite">
+                <p class="label">After the fix step</p>
+                <p>Built operations reports and Excel/Tableau dashboards used by <span class="ph">[ADD: number]</span> stakeholders, cutting manual prep by <span class="ph">[ADD: hours per week]</span>.</p>
+              </div>
+            </div>
+            <ul class="flags" aria-label="Reviewer flags">
+              <li><span class="mono-badge" aria-hidden="true">I</span><div><b>The Interviewer</b><p>Which reports, for whom, how often? This is the first thing I'd ask you about.</p></div></li>
+              <li><span class="mono-badge" aria-hidden="true">R</span><div><b>The Rival Applicant</b><p>Every analyst in the pile writes this line. Mine has a number in it.</p></div></li>
+              <li><span class="mono-badge" aria-hidden="true">F</span><div><b>The Field Expert</b><p>Name the tools and the data behind them. "Reports" could be a pivot table or a pipeline.</p></div></li>
+              <li><span class="mono-badge" aria-hidden="true">E</span><div><b>The Executive</b><p>What changed for the business because these reports existed?</p></div></li>
+            </ul>
+          </div>
+          <p class="note">Illustrative example written for this page, not output from a real run.</p>
+        </section>
+
+        <section class="part" aria-labelledby="panel-title">
+          <div class="part-head">
+            <h2 id="panel-title">The panel</h2>
+            <p>Each reviewer reads the version that passed the ATS screen, scores it on their own weighted criteria, and flags issues by quoting your actual lines. A flag that quotes text not in your resume is thrown out.</p>
+          </div>
+          <ul class="panel">
+            <li>
+              <span class="mono-badge" aria-hidden="true">I</span>
+              <div><h3>The Interviewer</h3><p class="role">Hiring manager deciding whether to interview you</p></div>
+              <p class="temper">Skeptical but fair. Looks for what can be verified and where the story doesn't add up, and asks the questions you'd face in the room.</p>
+              <ul class="criteria"><li>Credibility of claims <span class="w">×1.5</span></li><li>Worth an interview slot <span class="w">×1.5</span></li><li>Consistency, story, results <span class="w">×1</span></li></ul>
+            </li>
+            <li>
+              <span class="mono-badge" aria-hidden="true">R</span>
+              <div><h3>The Rival Applicant</h3><p class="role">A strong candidate applying for the same job</p></div>
+              <p class="temper">Competitive and blunt. Compares you with the top 10% of applicants and names where they'd beat you.</p>
+              <ul class="criteria"><li>Stands out from the stack <span class="w">×1.5</span></li><li>Proof of results <span class="w">×1.5</span></li><li>Tools, credentials, memorability <span class="w">×1</span></li></ul>
+            </li>
+            <li>
+              <span class="mono-badge" aria-hidden="true">F</span>
+              <div><h3>The Field Expert</h3><p class="role">Senior practitioner in your field</p></div>
+              <p class="temper">Precise and a bit pedantic. Judges whether you know the work at the level you claim, and catches outdated tools and misused jargon.</p>
+              <ul class="criteria"><li>Technical depth shown <span class="w">×1.5</span></li><li>Core competencies covered <span class="w">×1.5</span></li><li>Tools, terminology, scope <span class="w">×1</span></li></ul>
+            </li>
+            <li>
+              <span class="mono-badge" aria-hidden="true">E</span>
+              <div><h3>The Executive</h3><p class="role">VP who signs off on the hire</p></div>
+              <p class="temper">Impatient and commercially minded. Skims the top third in 30 seconds and asks what you're worth to the business.</p>
+              <ul class="criteria"><li>Business impact <span class="w">×2</span></li><li>Scope and ownership <span class="w">×1.5</span></li><li>Case for the salary <span class="w">×1.5</span></li></ul>
+            </li>
+          </ul>
+        </section>
+
+        <section class="part" aria-labelledby="math-title">
+          <div class="part-head">
+            <h2 id="math-title">The score is math, not a vibe</h2>
+            <p>Scores are computed in the page, not by the model, so every attempt is judged the same way.</p>
+          </div>
+          <div class="sheet math">
+            <div class="eq" role="img" aria-label="ATS score equals 30 percent parse checks plus 50 percent keyword match plus 20 percent bullets with a number, minus 10 per knockout and 5 per critical flag">
+              <div class="term"><small>parse checks</small><b>30%</b></div>
+              <div class="term"><small>keyword match</small><b><span class="op">+</span>50%</b></div>
+              <div class="term"><small>bullets with a number</small><b><span class="op">+</span>20%</b></div>
+              <div class="term minus"><small>per knockout</small><b><span class="op">−</span>10</b></div>
+              <div class="term minus"><small>per critical flag</small><b><span class="op">−</span>5</b></div>
+            </div>
+            <ul class="rules">
+              <li><strong>Pass mark 75</strong> with no critical flags. A failing resume is rewritten truthfully and screened again, up to two rewrites.</li>
+              <li><strong>Keywords are verified.</strong> A keyword only counts when its words actually appear in your resume.</li>
+              <li><strong>Reviewer scores</strong> are each reviewer's weighted criteria, rated 1 to 10 and scaled to 100.</li>
+              <li><strong>Checks that don't need AI</strong> run on every screen: missing contact details, weak openers, buzzwords, first person, mixed date formats, length.</li>
+              <li><strong>Nothing is invented.</strong> Rewrites never add employers, dates, tools or numbers. Missing facts become placeholders like <span class="ph">[ADD: % time saved]</span>.</li>
+              <li><strong>Reads your files in the browser:</strong> PDF, Word .docx (including headers, tables and text boxes) and plain text. Exports PDF or text.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="part" id="setup" aria-labelledby="setup-title">
+          <div class="part-head">
+            <h2 id="setup-title">Run it locally</h2>
+            <p>You need <a href="https://nodejs.org">Node.js 18 or later</a> and an <a href="https://console.anthropic.com/settings/keys">Anthropic API key</a>. The key stays on your machine and is never sent to the browser.</p>
+          </div>
+          <div class="sheet">
+            <ol class="steps">
+              <li><div>
+                <h3>Get the code</h3>
+                <div class="cmd"><pre><code>git clone https://github.com/Brax10jns/Claude-Projects.git
+cd Claude-Projects/resume-gauntlet
+npm install</code></pre><button class="copy" type="button">Copy</button></div>
+              </div></li>
+              <li><div>
+                <h3>Save your API key</h3>
+                <p>On Windows, this asks for the key without showing it and stores it in your user profile, outside the project folder. Then open a new terminal.</p>
+                <div class="cmd"><pre><code>npm run set-key</code></pre><button class="copy" type="button">Copy</button></div>
+                <p>On macOS or Linux, set it in your shell, or copy <code>.env.example</code> to <code>.env</code> and fill it in.</p>
+                <div class="cmd"><pre><code>export ANTHROPIC_API_KEY=your-key-here</code></pre><button class="copy" type="button">Copy</button></div>
+              </div></li>
+              <li><div>
+                <h3>Start it</h3>
+                <div class="cmd"><pre><code>npm start</code></pre><button class="copy" type="button">Copy</button></div>
+                <p>Then open <a href="http://127.0.0.1:3000">http://127.0.0.1:3000</a> and upload a resume or paste one in.</p>
+              </div></li>
+              <li><div>
+                <h3>Optional settings</h3>
+                <div class="cfg-wrap">
+                  <table class="cfg">
+                    <thead><tr><th>Variable</th><th>Default</th><th>What it does</th></tr></thead>
+                    <tbody>
+                      <tr><td><code>CLAUDE_MODEL</code></td><td><code>claude-opus-5-5</code></td><td>The Claude model used for every review.</td></tr>
+                      <tr><td><code>PORT</code></td><td><code>3000</code></td><td>Port the server listens on.</td></tr>
+                      <tr><td><code>HOST</code></td><td><code>127.0.0.1</code></td><td>Interface to listen on. Keep it local unless it sits behind your own login.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div></li>
+            </ol>
+          </div>
+        </section>
+
+        <section class="trust" aria-label="Cost, privacy and limits">
+          <div>
+            <h3>Cost</h3>
+            <ul>
+              <li>Each round makes about 6 to 11 Claude calls: screens, rewrites, four reviews and a final rewrite.</li>
+              <li>Billed to your own Anthropic account at <a href="https://www.anthropic.com/pricing">standard API rates</a>.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Privacy</h3>
+            <ul>
+              <li>Your resume goes to Anthropic's API only when a review runs. The server keeps no copies and logs no content.</li>
+              <li>Results and drafts stay in your browser's local storage.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Limits</h3>
+            <ul>
+              <li>The ATS screen simulates how tracking systems and recruiters typically filter. Real systems differ by employer.</li>
+              <li>The reviewers are AI personas and can be wrong. Check every change before you send your resume anywhere.</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </details>
+
+    <div class="next">
+      <span class="case">No. 002</span>
+      <p>The next project gets filed here.</p>
+    </div>
+  </main>
+
+  <footer>
+    <span>Built with Claude by Anthropic.</span>
+    <a href="https://github.com/Brax10jns/Claude-Projects">Source on GitHub</a>
+  </footer>
+</div>
+<script>
+document.querySelectorAll(".cmd").forEach(box => {
+  const btn = box.querySelector(".copy");
+  btn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(box.querySelector("code").textContent);
+      btn.textContent = "Copied";
+      btn.dataset.done = "";
+    } catch {
+      btn.textContent = "Select";
+    }
+    setTimeout(() => { btn.textContent = "Copy"; delete btn.dataset.done; }, 1600);
+  });
+});
+// "Run it locally" must land on setup even if the row was folded.
+document.querySelectorAll('a[href="#setup"]').forEach(a => a.addEventListener("click", () => {
+  document.getElementById("resume-gauntlet").open = true;
+}));
+</script>
+</body>
+</html>
