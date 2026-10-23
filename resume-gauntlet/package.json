@@ -8,7 +8,10 @@
   "scripts": {
     "start": "node server.js",
     "set-key": "powershell -NoProfile -ExecutionPolicy Bypass -File set-api-key.ps1",
-    "remove-key": "powershell -NoProfile -ExecutionPolicy Bypass -File set-api-key.ps1 -Remove"
+    "remove-key": "powershell -NoProfile -ExecutionPolicy Bypass -File set-api-key.ps1 -Remove",
+    "open": "powershell -NoProfile -ExecutionPolicy Bypass -File launch.ps1",
+    "install-shortcuts": "powershell -NoProfile -ExecutionPolicy Bypass -File install-shortcuts.ps1",
+    "remove-shortcuts": "powershell -NoProfile -ExecutionPolicy Bypass -File install-shortcuts.ps1 -Remove"
   },
   "engines": {
     "node": ">=18"

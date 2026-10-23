@@ -43,6 +43,18 @@ On macOS or Linux, set the key in your shell instead (`export ANTHROPIC_API_KEY=
 
 Then open **http://127.0.0.1:3000** in your browser.
 
+### One-click launch on Windows
+
+To skip the terminal from now on, run this once:
+
+```bash
+npm run install-shortcuts
+```
+
+It adds a **Resume Gauntlet** shortcut to your desktop and starts the server quietly in the background each time you sign in to Windows, so the app is ready when you open it. The shortcut starts the server if it isn't already running, then opens the app in your browser. If no API key is saved yet, it offers to set one first. You can also run `npm run open` to do the same from a terminal.
+
+The server's output goes to `%LOCALAPPDATA%\ResumeGauntlet\server.log`. To undo all of this (and stop the server), run `npm run remove-shortcuts`.
+
 ## Configuration
 
 Set these as environment variables (on Windows, `npm run set-key` handles the API key). A `.env` file also works as a fallback; real environment variables take precedence over it.
@@ -60,6 +72,8 @@ Set these as environment variables (on Windows, `npm run set-key` handles the AP
 index.html        The whole app: interface, prompts, scoring and file handling (no build step)
 server.js         Serves index.html and relays the page's prompts to Claude with your API key
 set-api-key.ps1   Windows helper behind npm run set-key / remove-key
+launch.ps1        Starts the server in the background if needed and opens the app (npm run open)
+install-shortcuts.ps1  Desktop shortcut and sign-in startup entry (npm run install-shortcuts / remove-shortcuts)
 ```
 
 - The page sends each agent's prompt to `POST /api/claude`. The server calls the Claude Messages API with the official [`@anthropic-ai/sdk`](https://www.npmjs.com/package/@anthropic-ai/sdk) and streams the answer back.
