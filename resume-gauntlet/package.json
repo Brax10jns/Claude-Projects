@@ -1,0 +1,19 @@
+{
+  "name": "resume-gauntlet",
+  "version": "1.0.0",
+  "description": "Screens a resume like an ATS, then runs it past an interviewer, a rival applicant, a field expert and an executive, and walks you through fixing every flag.",
+  "type": "module",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "set-key": "powershell -NoProfile -ExecutionPolicy Bypass -File set-api-key.ps1",
+    "remove-key": "powershell -NoProfile -ExecutionPolicy Bypass -File set-api-key.ps1 -Remove"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.132.1"
+  }
+}
