@@ -5,8 +5,7 @@ title Life Dashboard - Update
 where node >nul 2>nul
 if errorlevel 1 goto :nonode
 node src\refresh.js
-if errorlevel 1 goto :end
-start "" "%USERPROFILE%\LifeDashboard\life-dashboard.html"
+if exist "%USERPROFILE%\LifeDashboard\life-dashboard.html" start "" "%USERPROFILE%\LifeDashboard\life-dashboard.html"
 goto :end
 :nonode
 echo Node.js is not installed. Opening nodejs.org - install the LTS version, then try again.

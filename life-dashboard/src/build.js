@@ -73,23 +73,29 @@ export function bake(payload) {
   return template.replace('"__LIFE_DATA__"', () => json).replace(/__ICON__/g, () => iconDataUri());
 }
 
+// Builds the dashboard file and prints a short summary. Returns the file path.
+export function runBuild() {
+  const config = loadConfig();
+  const tz = resolveTimeZone(config);
+  const payload = buildPayload(config, { today: todayIn(tz), tz });
+  fs.mkdirSync(DIST_DIR, { recursive: true });
+  const out = path.join(DIST_DIR, 'life-dashboard.html');
+  fs.writeFileSync(out, bake(payload));
+
+  console.log(`\nBuilt ${out}`);
+  for (const s of Object.values(payload.sources)) {
+    console.log(`  ${s.mode === 'real' ? '● real' : '○ DEMO'}  ${s.label}${s.latestDate ? ` (latest day ${s.latestDate})` : ''}`);
+  }
+  const t = payload.life.days[payload.today];
+  console.log(`\nToday's Life Score: ${t ? t.score : 'no data'}${payload.life.mode === 'demo' ? ' (DEMO preview — nothing connected yet)' : t ? ` from ${t.used.join(', ')}` : ''}`);
+  const last = [...payload.dates].reverse().find((d) => d < payload.today && payload.life.days[d]);
+  if (payload.life.mode === 'real' && last) console.log(`Latest full day: ${last} → ${payload.life.days[last].score} from ${payload.life.days[last].used.join(', ')}`);
+  return out;
+}
+
 if (isMain(import.meta.url)) {
   try {
-    const config = loadConfig();
-    const tz = resolveTimeZone(config);
-    const payload = buildPayload(config, { today: todayIn(tz), tz });
-    fs.mkdirSync(DIST_DIR, { recursive: true });
-    const out = path.join(DIST_DIR, 'life-dashboard.html');
-    fs.writeFileSync(out, bake(payload));
-
-    console.log(`\nBuilt ${out}`);
-    for (const s of Object.values(payload.sources)) {
-      console.log(`  ${s.mode === 'real' ? '● real' : '○ DEMO'}  ${s.label}${s.latestDate ? ` (latest day ${s.latestDate})` : ''}`);
-    }
-    const t = payload.life.days[payload.today];
-    console.log(`\nToday's Life Score: ${t ? t.score : 'no data'}${payload.life.mode === 'demo' ? ' (DEMO preview — nothing connected yet)' : t ? ` from ${t.used.join(', ')}` : ''}`);
-    const last = [...payload.dates].reverse().find((d) => d < payload.today && payload.life.days[d]);
-    if (payload.life.mode === 'real' && last) console.log(`Latest full day: ${last} → ${payload.life.days[last].score} from ${payload.life.days[last].used.join(', ')}`);
+    runBuild();
     console.log('Open the file in your browser, or run "npm run serve" to open it on your phone.\n');
   } catch (e) {
     fail(e.message);

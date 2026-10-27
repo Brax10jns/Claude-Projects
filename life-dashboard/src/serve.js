@@ -21,5 +21,7 @@ http.createServer((req, res) => {
   console.log(`\nLife Dashboard on this laptop: http://localhost:${port}`);
   for (const ip of ips) console.log(`On your phone (same Wi-Fi):    http://${ip}:${port}`);
   console.log('\nOn iPhone: open that link in Safari → Share → Add to Home Screen.');
-  console.log('Anyone on this Wi-Fi who knows the address can see it while this runs. Ctrl+C to stop.\n');
+  console.log('If Windows asks whether Node.js may use the network, allow it on Private networks.');
+  console.log('Anyone on this Wi-Fi who knows the address can see it while this runs.');
+  console.log('Keep this window open while you use it on your phone. Close it (or Ctrl+C) to stop.\n');
 });

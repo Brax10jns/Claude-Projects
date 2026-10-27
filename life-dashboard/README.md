@@ -28,7 +28,10 @@ Everything below can be done by **double-clicking the `.cmd` files** in this fol
 | `Connect Apple Health.cmd` | Imports the newest Health export zip in Downloads |
 | `Connect Calendar.cmd` | Asks for your Tasks calendar link, syncs it |
 | `Connect RescueTime.cmd` | Asks for your RescueTime API key, syncs it |
-| `Update Dashboard.cmd` | Re-syncs calendar + RescueTime, rebuilds, opens the dashboard |
+| `Update Dashboard.cmd` | Re-syncs everything (including a new Health export), rebuilds, opens the dashboard |
+| `Schedule Daily Update.cmd` | Runs that update automatically every day (Windows Task Scheduler) |
+| `Stop Daily Update.cmd` | Removes the daily schedule |
+| `Open on Phone.cmd` | Serves the dashboard on your Wi-Fi so your iPhone can open it |
 
 If Windows shows "Windows protected your PC" the first time, click **More info → Run anyway**.
 
@@ -71,11 +74,18 @@ Days with less than `work.minTrackedMinutes` of tracked time (default 30) show n
 
 ## Daily use
 
-Double-click **`Update Dashboard.cmd`** (or run `npm run refresh`). It re-syncs the calendar and RescueTime, rebuilds and opens the dashboard.
+**Automatic (recommended).** Double-click **`Schedule Daily Update.cmd`** once and pick a time (default 07:15). Every day Windows will:
+- re-sync your iCloud Calendar and RescueTime,
+- import a **new Apple Health export** if one has appeared in `Downloads`, your OneDrive folder or `OneDrive\Downloads` since the last import (it unzips to a temp folder and deletes it afterwards),
+- rebuild `LifeDashboard\life-dashboard.html`.
 
-For new Apple Health days, export again from the phone and double-click `Connect Apple Health.cmd`. Export after the day is over: activity on the export's own day is shown as "so far" and isn't counted in the Life Score until a later export.
+If the laptop is off or asleep at that time, it runs as soon as it wakes. It runs a test straight after you set it up, and every run is logged to `LifeDashboard\update.log`. The task points at this code folder, so keep the folder somewhere permanent. If you move it or download a new version, double-click `Schedule Daily Update.cmd` again. `Stop Daily Update.cmd` removes the schedule.
 
-**On your phone.** Run `npm run serve` in this folder, open the printed `http://192.168.x.x:8787` link in Safari on the same Wi-Fi, then Share → **Add to Home Screen**. It runs full-screen with its own icon. The page loads from your laptop while `serve` is running, so refresh it at home to get new data.
+**The one manual step is Apple Health.** Apple doesn't let anything export Health data on its own. When you want new days, do Health app → your picture → Export All Health Data → **Save to Files → OneDrive** (or AirDrop it to Downloads). The next update picks it up. Export in the evening or the next morning: activity on the export's own day is shown as "so far" and isn't counted in the Life Score until a later export.
+
+**By hand:** double-click `Update Dashboard.cmd` (or `npm run refresh`) whenever you want to update now.
+
+**On your phone.** Double-click **`Open on Phone.cmd`** (or `npm run serve`). On your iPhone, on the same Wi-Fi, open the `http://192.168.x.x:8787` link it shows in Safari, then Share → **Add to Home Screen**. It runs full-screen with its own icon. The page loads from your laptop while that window is open, so open it at home to see new data. If Windows asks whether Node.js may use the network, allow **Private networks**.
 
 ## How scores work
 
@@ -98,5 +108,8 @@ src/scores.js  all scoring
 src/demo.js    DEMO data for unconnected sources
 src/build.js   scores + template.html → LifeDashboard/life-dashboard.html
 src/connect.js prompt for a link/key, save it, sync, build (used by the .cmd files)
+src/refresh.js daily update: new Health export from Downloads/OneDrive, calendar, RescueTime, build
+src/schedule.js registers/removes the Windows scheduled task
+src/serve.js   serves the dashboard on your Wi-Fi for the phone
 test/          npm test (synthetic fixtures only)
 ```
