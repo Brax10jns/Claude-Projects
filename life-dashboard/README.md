@@ -34,6 +34,8 @@ Each sync script prints a 14-day check table. Compare a few rows with the app be
 
 ### 1. Apple Health
 
+**Easiest (no PowerShell):** export from your iPhone (step 1 below), save `export.zip` to your Downloads, then double-click **`Connect Apple Health.cmd`** in this folder. It finds the newest `export*.zip` in Downloads, unzips it to a temp folder (deleted afterwards), imports it, builds the dashboard and opens it. You can also drag the zip, or an extracted `apple_health_export` folder, onto that file. If Node.js isn't installed, it opens nodejs.org for you.
+
 Apple Health has no web API, so you export it from your iPhone:
 
 1. iPhone **Health** app → tap your picture (top right) → **Export All Health Data** → Export. This can take a few minutes.
