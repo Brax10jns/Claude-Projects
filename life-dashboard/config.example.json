@@ -1,0 +1,33 @@
+{
+  "timezone": "auto",
+  "historyDays": 90,
+
+  "appleHealth": {
+    "exportPath": ""
+  },
+  "calendar": {
+    "icsUrl": "",
+    "icsFile": "",
+    "doneMarkers": ["✓", "✔", "✅", "[x]"]
+  },
+  "rescueTime": {
+    "apiKey": ""
+  },
+
+  "goals": {
+    "sleepHours": 8,
+    "exerciseMinutes": 30,
+    "steps": 8000,
+    "focusHours": 5
+  },
+  "weights": {
+    "sleep": 25,
+    "recovery": 20,
+    "training": 15,
+    "work": 20,
+    "tasks": 20
+  },
+  "work": {
+    "minTrackedMinutes": 30
+  }
+}

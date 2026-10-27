@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Life">
+<link rel="apple-touch-icon" href="__ICON__">
+<link rel="icon" href="__ICON__">
+<title>Life Dashboard</title>
+<style>
+:root {
+  color-scheme: dark;
+  --page: #000;
+  --card: #1a1a19;
+  --card-2: #222220;
+  --ink: #f0efec;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --track: #2c2c2a;
+  --line: rgba(255,255,255,0.10);
+  /* Pillar identity (validated categorical set, dark surface) */
+  --sleep: #9085e9;
+  --recovery: #199e70;
+  --training: #d95926;
+  --work: #3987e5;
+  --tasks: #d55181;
+  /* Status: only for the Life Score band, always with icon + label */
+  --good: #0ca30c;
+  --warn: #fab219;
+  --low: #d03b3b;
+  --radius: 20px;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--page); color: var(--ink); }
+body {
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.4;
+}
+button { font: inherit; color: inherit; }
+.wrap { max-width: 1120px; margin: 0 auto; }
+h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+.eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.muted { color: var(--muted); }
+.ink-2 { color: var(--ink-2); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Top bar */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.brand { font-size: 13px; font-weight: 800; letter-spacing: 0.24em; }
+.datenav { display: flex; align-items: center; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px; }
+.datenav button { background: none; border: 0; width: 34px; height: 34px; border-radius: 999px; cursor: pointer; font-size: 18px; color: var(--ink-2); }
+.datenav button:hover:not(:disabled) { background: var(--card-2); }
+.datenav button:disabled { opacity: 0.3; cursor: default; }
+.datenav .label { min-width: 116px; text-align: center; font-size: 14px; font-weight: 600; }
+
+/* DEMO marking */
+.demo-tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 800; letter-spacing: 0.12em; padding: 2px 7px; border-radius: 6px; border: 1px solid var(--ink-2); color: var(--ink); background: repeating-linear-gradient(135deg, transparent 0 4px, rgba(255,255,255,0.08) 4px 6px); vertical-align: middle; }
+.banner { display: flex; gap: 12px; align-items: flex-start; border: 1px dashed var(--ink-2); border-radius: 14px; padding: 12px 14px; margin-bottom: 16px; font-size: 13px; color: var(--ink-2); }
+.banner strong { color: var(--ink); }
+.card.demo { border-style: dashed; border-color: rgba(255,255,255,0.28); }
+
+/* Layout */
+.grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .grid.two { grid-template-columns: 1fr 1fr; } .grid.hero-grid { grid-template-columns: 420px 1fr; } }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; }
+section { margin-top: 28px; }
+section > .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+section > .head h2 { font-size: 20px; }
+
+/* Hero ring */
+.hero { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 24px 18px; }
+.ring-wrap { position: relative; width: min(280px, 72vw); aspect-ratio: 1; }
+.ring-wrap svg { width: 100%; height: 100%; display: block; }
+.ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ring-score { font-size: clamp(64px, 20vw, 84px); font-weight: 750; line-height: 1; letter-spacing: -0.03em; }
+.ring-score.none { font-size: 28px; font-weight: 600; color: var(--muted); }
+.band { margin-top: 8px; font-size: 13px; font-weight: 650; display: inline-flex; gap: 6px; align-items: center; }
+.band i { font-style: normal; }
+.band.good i { color: var(--good); } .band.warn i { color: var(--warn); } .band.low i { color: var(--low); }
+.hero .basis { margin-top: 14px; font-size: 13px; color: var(--ink-2); max-width: 340px; }
+.arc { transition: stroke-dashoffset 900ms cubic-bezier(.2,.8,.2,1); }
+@media (prefers-reduced-motion: reduce) { .arc { transition: none; } }
+
+/* Pillar row */
+.pillars { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.pill { background: none; border: 0; padding: 8px 2px; border-radius: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.pill:hover { background: var(--card-2); }
+.pill .mini { position: relative; width: 100%; max-width: 64px; aspect-ratio: 1; }
+.pill .mini svg { width: 100%; height: 100%; display: block; }
+.pill .mini span { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 700; font-size: 17px; }
+.pill .mini span.none { font-size: 10px; font-weight: 600; color: var(--muted); text-align: center; line-height: 1.1; }
+.pill .name { font-size: 12px; font-weight: 600; }
+.pill .sub { font-size: 10px; min-height: 18px; }
+.side-card { display: flex; flex-direction: column; gap: 16px; }
+
+/* Pillar detail cards */
+.pcard .phead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.pcard .title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.pcard h3 { font-size: 16px; }
+.pcard .src { font-size: 12px; color: var(--muted); }
+.pcard .pscore { font-size: 34px; font-weight: 750; line-height: 1; }
+.pcard .pscore small { font-size: 13px; font-weight: 600; color: var(--muted); }
+.pcard .pscore.none { font-size: 15px; font-weight: 600; color: var(--muted); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px 16px; }
+.stat .k { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.stat .v { font-size: 20px; font-weight: 650; margin-top: 2px; }
+.stat .v small { font-size: 12px; color: var(--muted); font-weight: 500; }
+.nodata { padding: 18px 0 6px; color: var(--muted); font-size: 14px; }
+.nodata b { color: var(--ink-2); display: block; font-size: 15px; margin-bottom: 2px; }
+.note { margin-top: 12px; font-size: 12px; color: var(--muted); }
+.stages { display: flex; gap: 2px; height: 10px; margin-top: 14px; }
+.stages div { border-radius: 3px; min-width: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 11px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.list { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.list li { display: flex; gap: 10px; align-items: baseline; }
+.list .chk { width: 18px; flex: none; text-align: center; font-weight: 700; }
+.list .chk.on { color: var(--ink); } .list .chk.off { color: var(--muted); }
+.list li.off .t { color: var(--ink-2); }
+.list .time { margin-left: auto; font-size: 12px; color: var(--muted); }
+.spark { margin-top: 14px; }
+
+/* Weekly review */
+.wk-top { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center; }
+.wk-avg { font-size: 56px; font-weight: 750; line-height: 1; letter-spacing: -0.02em; }
+.delta { font-size: 13px; font-weight: 650; }
+.delta.up { color: var(--good); } .delta.down { color: #ec835a; } .delta.flat { color: var(--muted); }
+.ptable { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ptable td, .ptable th { padding: 9px 4px; border-top: 1px solid var(--grid); text-align: left; }
+.ptable th { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; border-top: 0; }
+.ptable td.r, .ptable th.r { text-align: right; }
+.ptable .nm { display: flex; align-items: center; gap: 8px; }
+.ptable .spark-cell { width: 40%; }
+.chart-card h3 { font-size: 15px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.chart-card .cap { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.chart { margin-top: 10px; width: 100%; }
+.chart svg { display: block; overflow: visible; }
+.highlights { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.hl { background: var(--card-2); border-radius: 14px; padding: 12px 14px; }
+.hl .k { font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.hl .v { font-size: 16px; font-weight: 650; margin-top: 4px; }
+details.table-view { margin-top: 16px; }
+details.table-view summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
+.scroll-x { overflow-x: auto; }
+.dtable { border-collapse: collapse; font-size: 13px; margin-top: 10px; min-width: 100%; }
+.dtable th, .dtable td { padding: 6px 8px; border-bottom: 1px solid var(--grid); text-align: right; white-space: nowrap; }
+.dtable th:first-child, .dtable td:first-child { text-align: left; }
+.dtable th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* Footer */
+.sources { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.source { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; }
+.source .st { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--card-2); white-space: nowrap; }
+.how { font-size: 13px; color: var(--ink-2); }
+.how dt { color: var(--ink); font-weight: 650; margin-top: 10px; }
+.how dd { margin: 2px 0 0; }
+footer { margin-top: 24px; font-size: 12px; color: var(--muted); text-align: center; }
+
+#tip { position: fixed; z-index: 10; pointer-events: none; background: #2c2c2a; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; font-size: 12px; line-height: 1.35; box-shadow: 0 8px 24px rgba(0,0,0,.5); opacity: 0; transition: opacity 80ms; max-width: 220px; }
+#tip.on { opacity: 1; }
+#tip b { display: block; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">LIFE</div>
+    <nav class="datenav" aria-label="Choose day">
+      <button id="prev" aria-label="Previous day">‹</button>
+      <div class="label" id="dateLabel"></div>
+      <button id="next" aria-label="Next day">›</button>
+    </nav>
+  </header>
+
+  <div id="banner"></div>
+
+  <div class="grid hero-grid">
+    <div class="card hero" id="hero"></div>
+    <div class="card side-card">
+      <div class="eyebrow">Pillars</div>
+      <div class="pillars" id="pillarRow"></div>
+      <div>
+        <div class="eyebrow">Life Score · last 30 days</div>
+        <div class="chart" id="trend30"></div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="head"><h2>Today's details</h2><span class="muted" id="detailDate"></span></div>
+    <div class="grid two" id="pillarCards"></div>
+  </section>
+
+  <section id="weekly">
+    <div class="head"><h2>Weekly review</h2><span class="muted" id="weekRange"></span></div>
+    <div class="grid two">
+      <div class="card" id="weekLife"></div>
+      <div class="card" id="weekPillars"></div>
+    </div>
+    <div class="card" style="margin-top:16px" id="weekHighlights"></div>
+    <div class="grid two" style="margin-top:16px" id="weekCharts"></div>
+  </section>
+
+  <section>
+    <div class="head"><h2>Sources</h2></div>
+    <div class="card"><div class="sources" id="sources"></div></div>
+    <details class="card how" style="margin-top:16px">
+      <summary><strong>How the scores work</strong></summary>
+      <dl>
+        <dt>Life Score</dt>
+        <dd>Weighted average of the pillar scores for the day: <span id="weightsText"></span>. A pillar with no data that day is left out and the other weights are scaled up. DEMO pillars are never counted.</dd>
+        <dt>Sleep</dt>
+        <dd>75% hours asleep vs your goal, 25% restorative sleep (deep + REM) vs a 40% target. A night counts toward the day you wake up.</dd>
+        <dt>Recovery</dt>
+        <dd>Today's HRV (65%) and resting heart rate (35%) against your own previous 30 days. 50 means a normal day for you. It needs 7 days of history first ("calibrating").</dd>
+        <dt>Training</dt>
+        <dd>70% Apple Watch exercise minutes vs goal, 30% steps vs goal.</dd>
+        <dt>Work</dt>
+        <dd>60% focused hours (RescueTime "productive" and "very productive") vs goal, 40% productivity pulse. Days with less than the minimum tracked time show no data.</dd>
+        <dt>Tasks</dt>
+        <dd>Share of that day's events in your Tasks calendar whose title has ✓ or [x]. No tasks planned = no data.</dd>
+        <dt>Bands</dt>
+        <dd>▲ Strong 67–100 · ● Steady 34–66 · ▼ Low 0–33.</dd>
+      </dl>
+    </details>
+  </section>
+
+  <footer id="footer"></footer>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+const DATA = "__LIFE_DATA__";
+
+const PILLARS = [
+  { id: 'sleep', name: 'Sleep', color: 'var(--sleep)' },
+  { id: 'recovery', name: 'Recovery', color: 'var(--recovery)' },
+  { id: 'training', name: 'Training', color: 'var(--training)' },
+  { id: 'work', name: 'Work', color: 'var(--work)' },
+  { id: 'tasks', name: 'Tasks', color: 'var(--tasks)' },
+];
+const P = Object.fromEntries(PILLARS.map((p) => [p.id, p]));
+const DEMO = '<span class="demo-tag" title="Sample data to preview the design. Not counted in your Life Score.">DEMO</span>';
+
+let selected = DATA.today;
+
+// ---------- helpers ----------
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = (id) => document.getElementById(id);
+function addDays(d, n) { const [y, m, dd] = d.split('-').map(Number); return new Date(Date.UTC(y, m - 1, dd + n)).toISOString().slice(0, 10); }
+const asDate = (d) => new Date(d + 'T12:00:00Z');
+const fmt = {
+  long: (d) => asDate(d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' }),
+  short: (d) => asDate(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' }),
+  dow: (d) => asDate(d).toLocaleDateString(undefined, { weekday: 'narrow', timeZone: 'UTC' }),
+  dowShort: (d) => asDate(d).toLocaleDateString(undefined, { weekday: 'short', timeZone: 'UTC' }),
+  hm: (min) => `${Math.floor(min / 60)}h ${String(Math.round(min % 60)).padStart(2, '0')}m`,
+};
+function band(score) {
+  if (score == null) return null;
+  if (score >= 67) return { cls: 'good', icon: '▲', label: 'Strong', color: 'var(--good)' };
+  if (score >= 34) return { cls: 'warn', icon: '●', label: 'Steady', color: 'var(--warn)' };
+  return { cls: 'low', icon: '▼', label: 'Low', color: 'var(--low)' };
+}
+const pillarDay = (id, d) => DATA.pillars[id].days[d] ?? null;
+const isDemo = (id) => DATA.pillars[id].mode === 'demo';
+const lifeDay = (d) => DATA.life.days[d] ?? null;
+const week = (end) => Array.from({ length: 7 }, (_, i) => addDays(end, i - 6));
+const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+function avgScore(get, dates) {
+  const xs = dates.map(get).filter((v) => v != null);
+  return xs.length ? { avg: Math.round(mean(xs)), n: xs.length } : { avg: null, n: 0 };
+}
+function deltaHtml(now, prev) {
+  if (now == null || prev == null) return '<span class="delta flat">no comparison</span>';
+  const d = now - prev;
+  if (d === 0) return '<span class="delta flat">± 0 vs last week</span>';
+  return `<span class="delta ${d > 0 ? 'up' : 'down'}">${d > 0 ? '▲ +' : '▼ −'}${Math.abs(d)} vs last week</span>`;
+}
+
+function ring(score, { size, stroke, color, track = 'var(--track)' }) {
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r;
+  const off = score == null ? c : c * (1 - score / 100);
+  return `<svg viewBox="0 0 ${size} ${size}" aria-hidden="true">
+    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${track}" stroke-width="${stroke}"/>
+    ${score == null ? '' : `<circle class="arc" cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+      stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c}" data-off="${off}" transform="rotate(-90 ${size / 2} ${size / 2})"/>`}
+  </svg>`;
+}
+function animateRings(root) {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    root.querySelectorAll('.arc[data-off]').forEach((a) => a.setAttribute('stroke-dashoffset', a.dataset.off));
+  }));
+}
+
+// ---------- charts (inline SVG, sized to their container) ----------
+function niceMax(v) {
+  if (!v || v <= 0) return 1;
+  const p = 10 ** Math.floor(Math.log10(v)), n = v / p;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
+}
+function topRounded(x, y, w, h, r) {
+  r = Math.min(r, h, w / 2);
+  const y0 = y + h;
+  return `M${x},${y0}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y0}Z`;
+}
+// items: [{date, segments:[{value,color}], tip}] — value null => no data
+function barChart(el, items, { goal, goalLabel, max, height = 150, fmtTick = (v) => v, labelMax = true, fmtVal = (v) => v }) {
+  const W = Math.max(240, el.clientWidth || 300), H = height;
+  const L = 30, R = 6, T = 16, B = 22, pw = W - L - R, ph = H - T - B;
+  const totals = items.map((i) => i.segments ? i.segments.reduce((a, s) => a + (s.value || 0), 0) : null);
+  const vmax = max ?? niceMax(Math.max(goal || 0, ...totals.filter((v) => v != null), 0) * 1.05);
+  const y = (v) => T + ph - (v / vmax) * ph;
+  const slot = pw / items.length, bw = Math.min(26, slot * 0.56);
+  let s = `<svg width="${W}" height="${H}" role="img">`;
+  for (const t of [0, vmax / 2, vmax]) {
+    s += `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="${t === 0 ? 'var(--axis)' : 'var(--grid)'}" stroke-width="1"/>`;
+    s += `<text x="${L - 6}" y="${y(t) + 3.5}" text-anchor="end" font-size="10" fill="var(--muted)" class="num">${fmtTick(t)}</text>`;
+  }
+  const maxIdx = labelMax ? totals.reduce((bi, v, i) => (v != null && (bi < 0 || v > totals[bi]) ? i : bi), -1) : -1;
+  items.forEach((it, i) => {
+    const cx = L + slot * i + slot / 2, x = cx - bw / 2, total = totals[i];
+    if (total == null) {
+      s += `<line x1="${cx - 4}" x2="${cx + 4}" y1="${y(0) - 3}" y2="${y(0) - 3}" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"/>`;
+    } else {
+      let base = y(0);
+      const segs = it.segments.filter((sg) => sg.value > 0);
+      segs.forEach((sg, k) => {
+        const h = Math.max(0, (sg.value / vmax) * ph - (k > 0 ? 2 : 0));
+        const top = base - h - (k > 0 ? 2 : 0);
+        s += k === segs.length - 1 ? `<path d="${topRounded(x, top, bw, h, 4)}" fill="${sg.color}"/>` : `<rect x="${x}" y="${top}" width="${bw}" height="${h}" fill="${sg.color}"/>`;
+        base = top;
+      });
+      if (i === maxIdx && total > 0) s += `<text x="${cx}" y="${y(total) - 5}" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink-2)" class="num">${fmtVal(total)}</text>`;
+    }
+    const sel = it.date === selected;
+    s += `<text x="${cx}" y="${H - 6}" text-anchor="middle" font-size="11" fill="${sel ? 'var(--ink)' : 'var(--muted)'}" font-weight="${sel ? 700 : 400}">${fmt.dow(it.date)}</text>`;
+    s += `<rect x="${L + slot * i}" y="${T}" width="${slot}" height="${ph + B}" fill="transparent" data-tip="${esc(it.tip)}"/>`;
+  });
+  if (goal) {
+    s += `<line x1="${L}" x2="${W - R}" y1="${y(goal)}" y2="${y(goal)}" stroke="var(--ink-2)" stroke-width="1" opacity="0.7"/>`;
+    s += `<text x="${W - R}" y="${y(goal) - 4}" text-anchor="end" font-size="10" fill="var(--ink-2)">${esc(goalLabel)}</text>`;
+  }
+  el.innerHTML = s + '</svg>';
+}
+// points: [{date, value, tip}] — null value breaks the line
+function lineChart(el, points, { color, height = 150, baseline, baselineLabel, min, max, labelEvery = 1, fmtTick = (v) => v, xLabel = fmt.dow }) {
+  const W = Math.max(240, el.clientWidth || 300), H = height;
+  const L = 30, R = 8, T = 14, B = 22, pw = W - L - R, ph = H - T - B;
+  const vals = points.map((p) => p.value).filter((v) => v != null).concat(baseline != null ? [baseline] : []);
+  let lo = min ?? (vals.length ? Math.min(...vals) : 0), hi = max ?? (vals.length ? Math.max(...vals) : 1);
+  if (min == null || max == null) { const pad = Math.max(1, (hi - lo) * 0.15); if (min == null) lo = Math.max(0, Math.floor(lo - pad)); if (max == null) hi = Math.ceil(hi + pad); }
+  if (hi === lo) hi = lo + 1;
+  const x = (i) => L + (points.length === 1 ? pw / 2 : (i / (points.length - 1)) * pw);
+  const y = (v) => T + ph - ((v - lo) / (hi - lo)) * ph;
+  let s = `<svg width="${W}" height="${H}" role="img">`;
+  for (const t of [lo, (lo + hi) / 2, hi]) {
+    s += `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="${t === lo ? 'var(--axis)' : 'var(--grid)'}"/>`;
+    s += `<text x="${L - 6}" y="${y(t) + 3.5}" text-anchor="end" font-size="10" fill="var(--muted)" class="num">${fmtTick(Math.round(t))}</text>`;
+  }
+  if (baseline != null) {
+    s += `<line x1="${L}" x2="${W - R}" y1="${y(baseline)}" y2="${y(baseline)}" stroke="var(--ink-2)" opacity="0.7"/>`;
+    s += `<text x="${W - R}" y="${y(baseline) - 4}" text-anchor="end" font-size="10" fill="var(--ink-2)">${esc(baselineLabel)}</text>`;
+  }
+  let d = '', pen = false;
+  points.forEach((p, i) => {
+    if (p.value == null) { pen = false; return; }
+    d += `${pen ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`; pen = true;
+  });
+  s += `<path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  points.forEach((p, i) => {
+    const lone = p.value != null && points[i - 1]?.value == null && points[i + 1]?.value == null;
+    if (p.value != null && (p.date === selected || lone)) s += `<circle cx="${x(i)}" cy="${y(p.value)}" r="4" fill="${color}" stroke="var(--card)" stroke-width="2"/>`;
+    if (p.value == null) s += `<line x1="${x(i) - 3}" x2="${x(i) + 3}" y1="${y(lo) - 3}" y2="${y(lo) - 3}" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"/>`;
+    const last = i === points.length - 1;
+    if (last || (i % labelEvery === 0 && points.length - 1 - i >= labelEvery / 2)) {
+      const sel = p.date === selected;
+      s += `<text x="${x(i)}" y="${H - 6}" text-anchor="${i === 0 && labelEvery > 1 ? 'start' : i === points.length - 1 && labelEvery > 1 ? 'end' : 'middle'}" font-size="11" fill="${sel ? 'var(--ink)' : 'var(--muted)'}" font-weight="${sel ? 700 : 400}">${xLabel(p.date)}</text>`;
+    }
+    const hw = pw / Math.max(1, points.length - 1) / 2;
+    s += `<rect x="${x(i) - hw}" y="${T}" width="${hw * 2}" height="${ph + B}" fill="transparent" data-tip="${esc(p.tip)}"/>`;
+  });
+  el.innerHTML = s + '</svg>';
+}
+const tip = (title, ...lines) => `<b>${esc(title)}</b>${lines.filter(Boolean).map(esc).join('<br>')}`;
+
+// ---------- sections ----------
+function renderBanner() {
+  const demo = PILLARS.filter((p) => isDemo(p.id));
+  if (!demo.length) { $('banner').innerHTML = ''; return; }
+  const names = demo.map((p) => p.name).join(', ');
+  $('banner').innerHTML = DATA.life.mode === 'demo'
+    ? `<div class="banner">${DEMO}<div><strong>Preview: nothing is connected yet.</strong> Every number below is DEMO data so you can see the design. Connect a source to start your real Life Score.</div></div>`
+    : `<div class="banner">${DEMO}<div><strong>${esc(names)}</strong> ${demo.length === 1 ? 'shows' : 'show'} DEMO data until connected. DEMO pillars are not part of your Life Score.</div></div>`;
+}
+
+function renderHero() {
+  const l = lifeDay(selected), b = band(l?.score);
+  const demo = DATA.life.mode === 'demo';
+  const total = DATA.life.pillars.length;
+  let basis;
+  if (!l) basis = demo ? 'No DEMO data for this day.' : `No data from your connected sources for ${fmt.long(selected)}.`;
+  else {
+    const used = l.used.map((id) => P[id].name).join(', ');
+    basis = demo ? `DEMO preview from ${used}.` : `Based on ${used} (${l.used.length} of ${PILLARS.length} pillars).`;
+    const missing = DATA.life.pillars.filter((id) => !l.used.includes(id));
+    if (missing.length) basis += ` No data today: ${missing.map((id) => P[id].name).join(', ')}.`;
+    const demoNames = PILLARS.filter((p) => isDemo(p.id)).map((p) => p.name);
+    if (!demo && demoNames.length) basis += ` Not counted (DEMO): ${demoNames.join(', ')}.`;
+  }
+  $('hero').innerHTML = `
+    <div class="eyebrow" style="margin-bottom:14px">Life Score ${demo ? DEMO : ''}</div>
+    <div class="ring-wrap">
+      ${ring(l?.score, { size: 280, stroke: 22, color: b ? b.color : 'var(--muted)' })}
+      <div class="ring-center">
+        <div class="ring-score num ${l ? '' : 'none'}">${l ? l.score : 'no data'}</div>
+        ${b ? `<div class="band ${b.cls}"><i aria-hidden="true">${b.icon}</i>${b.label}</div>` : ''}
+      </div>
+    </div>
+    <div class="basis">${esc(basis)}</div>`;
+  animateRings($('hero'));
+}
+
+function renderPillarRow() {
+  $('pillarRow').innerHTML = PILLARS.map((p) => {
+    const d = pillarDay(p.id, selected);
+    const label = d?.score != null ? d.score : d?.calibrating ? 'calibrating' : 'no data';
+    return `<button class="pill" data-go="pc-${p.id}" aria-label="${p.name}: ${label}${isDemo(p.id) ? ' (demo)' : ''}">
+      <div class="mini">${ring(d?.score, { size: 64, stroke: 7, color: p.color })}<span class="num ${d?.score == null ? 'none' : ''}">${label}</span></div>
+      <div class="name">${p.name}</div>
+      <div class="sub">${isDemo(p.id) ? DEMO : ''}</div>
+    </button>`;
+  }).join('');
+  animateRings($('pillarRow'));
+}
+
+function renderTrend30() {
+  const dates = Array.from({ length: 30 }, (_, i) => addDays(selected, i - 29)).filter((d) => d >= DATA.dates[0]);
+  const demo = DATA.life.mode === 'demo';
+  lineChart($('trend30'), dates.map((d) => {
+    const l = lifeDay(d);
+    return { date: d, value: l?.score ?? null, tip: tip(fmt.long(d), l ? `Life Score ${l.score}${demo ? ' (DEMO)' : ''}` : 'no data') };
+  }), { color: 'var(--ink)', min: 0, max: 100, height: 130, labelEvery: 7, xLabel: fmt.short });
+}
+
+const stat = (k, v, unit = '') => `<div class="stat"><div class="k">${k}</div><div class="v num">${v}${unit ? ` <small>${unit}</small>` : ''}</div></div>`;
+const SOURCE_NAME = { appleHealth: 'Apple Health', rescueTime: 'RescueTime', calendar: 'iCloud Calendar' };
+
+function pillarBody(id, d) {
+  const g = DATA.goals;
+  if (id === 'sleep') {
+    const total = (d.deepMin || 0) + (d.remMin || 0) + (d.coreMin || 0) + (d.awakeMin || 0);
+    const stages = d.hasStages && total ? `
+      <div class="stages" role="img" aria-label="Sleep stages">
+        ${[['deepMin', '#6a5bd6'], ['remMin', '#9085e9'], ['coreMin', '#c1b9f5'], ['awakeMin', '#5f5e5a']].map(([k, c]) => d[k] ? `<div style="flex:${d[k]};background:${c}" data-tip="${esc(tip(k.replace('Min', '').replace(/^./, (x) => x.toUpperCase()), fmt.hm(d[k])))}"></div>` : '').join('')}
+      </div>
+      <div class="legend"><span><i style="background:#6a5bd6"></i>Deep ${fmt.hm(d.deepMin)}</span><span><i style="background:#9085e9"></i>REM ${fmt.hm(d.remMin)}</span><span><i style="background:#c1b9f5"></i>Core ${fmt.hm(d.coreMin)}</span><span><i style="background:#5f5e5a"></i>Awake ${fmt.hm(d.awakeMin)}</span></div>` : '';
+    return `<div class="stats">
+      ${stat(d.inBedOnly ? 'In bed' : 'Asleep', d.hours, `h / ${g.sleepHours}h`)}
+      ${stat('Bed → wake', `${d.bedtime}–${d.wake}`)}
+      ${d.restorativePct != null ? stat('Deep + REM', d.restorativePct, '%') : ''}
+    </div>${stages}${d.inBedOnly ? '<div class="note">Only time in bed was recorded (no sleep tracking), so hours are in bed.</div>' : ''}${!d.hasStages && !d.inBedOnly ? '<div class="note">No sleep stages recorded; score uses hours only.</div>' : ''}`;
+  }
+  if (id === 'recovery') {
+    return `<div class="stats">
+      ${d.hrv != null ? `<div class="stat"><div class="k">HRV</div><div class="v num">${d.hrv} <small>ms</small></div><div class="muted" style="font-size:12px">${d.hrvBase != null ? `usual ${d.hrvBase} ms` : 'no baseline yet'}</div></div>` : stat('HRV', 'no data')}
+      ${d.rhr != null ? `<div class="stat"><div class="k">Resting HR</div><div class="v num">${d.rhr} <small>bpm</small></div><div class="muted" style="font-size:12px">${d.rhrBase != null ? `usual ${d.rhrBase} bpm` : 'no baseline yet'}</div></div>` : stat('Resting HR', 'no data')}
+    </div>${d.calibrating ? `<div class="note">Calibrating: needs 7 days of HRV or resting HR history before it can score (has ${d.baselineDays}).</div>` : ''}`;
+  }
+  if (id === 'training') {
+    return `<div class="stats">
+      ${stat('Exercise', d.exerciseMin, `min / ${g.exerciseMinutes}`)}
+      ${stat('Steps', d.steps != null ? d.steps.toLocaleString() : '—')}
+      ${stat('Active', d.activeKcal != null ? d.activeKcal.toLocaleString() : '—', 'kcal')}
+    </div>${d.workouts.length ? `<ul class="list">${d.workouts.map((w) => `<li><span class="chk on" aria-hidden="true">●</span><span class="t">${esc(w.type.replace(/([a-z])([A-Z])/g, '$1 $2'))} · ${w.minutes} min${w.kcal ? ` · ${w.kcal} kcal` : ''}</span><span class="time">${esc(w.time || '')}</span></li>`).join('')}</ul>` : '<div class="note">No workouts logged.</div>'}`;
+  }
+  if (id === 'work') {
+    return `<div class="stats">
+      ${stat('Focused', d.focusHours, `h / ${g.focusHours}h`)}
+      ${stat('Pulse', d.pulse)}
+      ${stat('Tracked', d.trackedHours, 'h')}
+      ${stat('Distracted', d.distractedHours, 'h')}
+    </div>`;
+  }
+  if (id === 'tasks') {
+    return `<div class="stats">${stat('Done', `${d.done} / ${d.total}`)}</div>
+      <ul class="list">${d.tasks.map((t) => `<li class="${t.done ? 'on' : 'off'}"><span class="chk ${t.done ? 'on' : 'off'}" aria-label="${t.done ? 'done' : 'not done'}">${t.done ? '✓' : '○'}</span><span class="t">${esc(t.title)}</span><span class="time">${esc(t.time || 'all day')}</span></li>`).join('')}</ul>`;
+  }
+  return '';
+}
+
+const NO_DATA_WHY = {
+  sleep: 'No sleep was recorded for this night.',
+  recovery: 'No HRV or resting heart rate was recorded.',
+  training: 'No steps, exercise or workouts were recorded.',
+  work: 'RescueTime tracked no time this day.',
+  tasks: 'No tasks were planned in your Tasks calendar.',
+};
+
+function renderPillarCards() {
+  $('detailDate').textContent = fmt.long(selected);
+  $('pillarCards').innerHTML = PILLARS.map((p) => {
+    const d = pillarDay(p.id, selected), demo = isDemo(p.id);
+    const src = SOURCE_NAME[DATA.pillars[p.id].source];
+    let scoreHtml, body;
+    if (d && d.score != null) {
+      scoreHtml = `<div class="pscore num">${d.score}<small> /100</small></div>`;
+      body = pillarBody(p.id, d);
+    } else if (d) {
+      scoreHtml = `<div class="pscore none">${d.calibrating ? 'calibrating' : 'no data'}</div>`;
+      body = pillarBody(p.id, d) + (d.belowMinimum ? `<div class="note">Under the minimum tracked time, so not scored.</div>` : '');
+    } else {
+      scoreHtml = `<div class="pscore none">no data</div>`;
+      body = `<div class="nodata"><b>no data</b>${NO_DATA_WHY[p.id]}</div>`;
+    }
+    return `<article class="card pcard ${demo ? 'demo' : ''}" id="pc-${p.id}">
+      <div class="phead">
+        <div><div class="title"><span class="dot" style="background:${p.color}"></span><h3>${p.name}</h3>${demo ? DEMO : ''}</div>
+        <div class="src">${demo ? `Sample data · connect ${src}` : src}</div></div>
+        ${scoreHtml}
+      </div>
+      ${body}
+      <div class="spark" id="spark-${p.id}"></div>
+    </article>`;
+  }).join('');
+  for (const p of PILLARS) {
+    barChart($(`spark-${p.id}`), week(selected).map((dt) => {
+      const v = pillarDay(p.id, dt)?.score ?? null;
+      return { date: dt, segments: v == null ? null : [{ value: v, color: p.color }], tip: tip(fmt.long(dt), v == null ? 'no data' : `${p.name} ${v}${isDemo(p.id) ? ' (DEMO)' : ''}`) };
+    }), { max: 100, height: 92, labelMax: false });
+  }
+}
+
+function renderWeekly() {
+  const dates = week(selected), prev = dates.map((d) => addDays(d, -7));
+  $('weekRange').textContent = `${fmt.short(dates[0])} – ${fmt.short(dates[6])}`;
+  const demoLife = DATA.life.mode === 'demo';
+
+  // Life Score this week
+  const now = avgScore((d) => lifeDay(d)?.score, dates), before = avgScore((d) => lifeDay(d)?.score, prev);
+  $('weekLife').innerHTML = `
+    <div class="eyebrow">Life Score · weekly average ${demoLife ? DEMO : ''}</div>
+    <div class="wk-top" style="margin-top:10px">
+      <div class="wk-avg num">${now.avg ?? '—'}</div>
+      <div>${deltaHtml(now.avg, before.avg)}<div class="muted" style="font-size:12px;margin-top:2px">${now.n} of 7 days scored${before.avg != null ? ` · last week ${before.avg}` : ''}</div></div>
+    </div>
+    <div class="chart" id="wkLifeChart"></div>`;
+  barChart($('wkLifeChart'), dates.map((d) => {
+    const l = lifeDay(d), b = band(l?.score);
+    return { date: d, segments: l ? [{ value: l.score, color: 'var(--ink-2)' }] : null, tip: tip(fmt.long(d), l ? `Life Score ${l.score} · ${b.label}${demoLife ? ' (DEMO)' : ''}` : 'no data') };
+  }), { max: 100, height: 150 });
+
+  // Pillars table
+  $('weekPillars').innerHTML = `<div class="eyebrow">Pillars · this week vs last</div>
+    <table class="ptable" style="margin-top:6px"><thead><tr><th>Pillar</th><th class="spark-cell">Daily</th><th class="r">Avg</th><th class="r">Change</th></tr></thead><tbody>
+    ${PILLARS.map((p) => {
+      const n = avgScore((d) => pillarDay(p.id, d)?.score, dates), b = avgScore((d) => pillarDay(p.id, d)?.score, prev);
+      const ch = n.avg != null && b.avg != null ? n.avg - b.avg : null;
+      return `<tr><td><div class="nm"><span class="dot" style="background:${p.color}"></span>${p.name} ${isDemo(p.id) ? DEMO : ''}</div></td>
+        <td class="spark-cell"><div id="wks-${p.id}"></div></td>
+        <td class="r num">${n.avg ?? '<span class="muted">no data</span>'}</td>
+        <td class="r num">${ch == null ? '<span class="muted">—</span>' : `<span class="delta ${ch > 0 ? 'up' : ch < 0 ? 'down' : 'flat'}">${ch > 0 ? '▲ +' : ch < 0 ? '▼ −' : '± '}${Math.abs(ch)}</span>`}</td></tr>`;
+    }).join('')}</tbody></table>`;
+  for (const p of PILLARS) {
+    const el = $(`wks-${p.id}`);
+    const W = Math.max(70, el.clientWidth || 120), H = 26, slot = W / 7, bw = Math.min(10, slot * 0.6);
+    let s = `<svg width="${W}" height="${H}" aria-hidden="true">`;
+    dates.forEach((d, i) => {
+      const v = pillarDay(p.id, d)?.score;
+      const cx = slot * i + slot / 2;
+      if (v == null) s += `<line x1="${cx - 3}" x2="${cx + 3}" y1="${H - 1}" y2="${H - 1}" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"/>`;
+      else { const h = Math.max(2, (v / 100) * (H - 2)); s += `<path d="${topRounded(cx - bw / 2, H - h, bw, h, 2)}" fill="${p.color}"/>`; }
+      s += `<rect x="${slot * i}" y="0" width="${slot}" height="${H}" fill="transparent" data-tip="${esc(tip(fmt.long(d), v == null ? 'no data' : `${p.name} ${v}`))}"/>`;
+    });
+    el.innerHTML = s + '</svg>';
+  }
+
+  // Highlights (same kind as the Life Score only)
+  const hl = [];
+  const scored = dates.filter((d) => lifeDay(d));
+  if (scored.length) {
+    const best = scored.reduce((a, b) => (lifeDay(b).score > lifeDay(a).score ? b : a));
+    const worst = scored.reduce((a, b) => (lifeDay(b).score < lifeDay(a).score ? b : a));
+    hl.push(['Best day', `${fmt.dowShort(best)} · ${lifeDay(best).score}`]);
+    if (worst !== best) hl.push(['Toughest day', `${fmt.dowShort(worst)} · ${lifeDay(worst).score}`]);
+  }
+  const moves = DATA.life.pillars.map((id) => {
+    const n = avgScore((d) => pillarDay(id, d)?.score, dates).avg, b = avgScore((d) => pillarDay(id, d)?.score, prev).avg;
+    return n != null && b != null ? { id, ch: n - b } : null;
+  }).filter(Boolean);
+  const up = moves.filter((m) => m.ch > 0).sort((a, b) => b.ch - a.ch)[0];
+  const down = moves.filter((m) => m.ch < 0).sort((a, b) => a.ch - b.ch)[0];
+  if (up) hl.push(['Most improved', `${P[up.id].name} ▲ +${up.ch}`]);
+  if (down) hl.push(['Needs attention', `${P[down.id].name} ▼ −${Math.abs(down.ch)}`]);
+  const sleepNights = dates.map((d) => pillarDay('sleep', d)).filter((s) => s?.score != null);
+  if (sleepNights.length && DATA.life.pillars.includes('sleep')) hl.push(['Avg sleep', `${(mean(sleepNights.map((s) => s.hours))).toFixed(1)} h over ${sleepNights.length} nights`]);
+  const t = dates.map((d) => pillarDay('tasks', d)).filter(Boolean);
+  if (t.length && DATA.life.pillars.includes('tasks')) hl.push(['Tasks done', `${t.reduce((a, x) => a + x.done, 0)} of ${t.reduce((a, x) => a + x.total, 0)}`]);
+  $('weekHighlights').innerHTML = `<div class="eyebrow" style="margin-bottom:10px">Highlights ${demoLife ? DEMO : ''}</div>` + (hl.length
+    ? `<div class="highlights">${hl.map(([k, v]) => `<div class="hl"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`).join('')}</div>`
+    : '<div class="muted">Not enough data this week yet.</div>');
+
+  // Charts
+  const g = DATA.goals;
+  const chartCard = (id, title, cap, pillar) => `<div class="card chart-card ${isDemo(pillar) ? 'demo' : ''}"><h3><span class="dot" style="background:${P[pillar].color}"></span>${title} ${isDemo(pillar) ? DEMO : ''}</h3><div class="cap">${cap}</div><div class="chart" id="${id}"></div>${id === 'chTasks' ? '<div class="legend"><span><i style="background:var(--tasks)"></i>Done</span><span><i style="background:#5f5e5a"></i>Not done</span></div>' : ''}</div>`;
+  $('weekCharts').innerHTML = [
+    chartCard('chSleep', 'Sleep', 'Hours asleep per night', 'sleep'),
+    chartCard('chHrv', 'HRV', 'Heart rate variability, ms (higher is better)', 'recovery'),
+    chartCard('chRhr', 'Resting heart rate', 'bpm (lower is better)', 'recovery'),
+    chartCard('chTrain', 'Training', 'Exercise minutes per day', 'training'),
+    chartCard('chWork', 'Work', 'Focused hours per day (RescueTime)', 'work'),
+    chartCard('chTasks', 'Tasks', 'Tasks done vs planned', 'tasks'),
+  ].join('') + `<details class="card table-view" style="grid-column:1/-1"><summary>Show this week as a table</summary><div class="scroll-x" id="wkTable"></div></details>`;
+
+  const dm = (id) => (isDemo(id) ? ' (DEMO)' : '');
+  barChart($('chSleep'), dates.map((d) => { const s = pillarDay('sleep', d); return { date: d, segments: s ? [{ value: s.hours, color: 'var(--sleep)' }] : null, tip: tip(fmt.long(d), s ? `${s.hours} h${s.inBedOnly ? ' in bed' : ' asleep'}${dm('sleep')}` : 'no data') }; }),
+    { goal: g.sleepHours, goalLabel: `goal ${g.sleepHours}h`, fmtTick: (v) => `${v}h`, fmtVal: (v) => `${v}h` });
+  const rec = dates.map((d) => pillarDay('recovery', d));
+  const lastRec = [...rec].reverse().find((r) => r);
+  lineChart($('chHrv'), dates.map((d, i) => ({ date: d, value: rec[i]?.hrv ?? null, tip: tip(fmt.long(d), rec[i]?.hrv != null ? `${rec[i].hrv} ms${dm('recovery')}` : 'no data', rec[i]?.hrvBase != null ? `usual ${rec[i].hrvBase} ms` : '') })),
+    { color: 'var(--recovery)', baseline: lastRec?.hrvBase ?? null, baselineLabel: 'your usual' });
+  lineChart($('chRhr'), dates.map((d, i) => ({ date: d, value: rec[i]?.rhr ?? null, tip: tip(fmt.long(d), rec[i]?.rhr != null ? `${rec[i].rhr} bpm${dm('recovery')}` : 'no data', rec[i]?.rhrBase != null ? `usual ${rec[i].rhrBase} bpm` : '') })),
+    { color: 'var(--recovery)', baseline: lastRec?.rhrBase ?? null, baselineLabel: 'your usual' });
+  barChart($('chTrain'), dates.map((d) => { const t = pillarDay('training', d); return { date: d, segments: t ? [{ value: t.exerciseMin, color: 'var(--training)' }] : null, tip: tip(fmt.long(d), t ? `${t.exerciseMin} min exercise${dm('training')}` : 'no data', t?.steps != null ? `${t.steps.toLocaleString()} steps` : '') }; }),
+    { goal: g.exerciseMinutes, goalLabel: `goal ${g.exerciseMinutes} min` });
+  barChart($('chWork'), dates.map((d) => { const w = pillarDay('work', d); return { date: d, segments: w ? [{ value: w.focusHours, color: 'var(--work)' }] : null, tip: tip(fmt.long(d), w ? `${w.focusHours} h focused of ${w.trackedHours} h tracked${dm('work')}` : 'no data', w ? `pulse ${w.pulse}` : '') }; }),
+    { goal: g.focusHours, goalLabel: `goal ${g.focusHours}h`, fmtTick: (v) => `${v}h`, fmtVal: (v) => `${v}h` });
+  barChart($('chTasks'), dates.map((d) => { const t = pillarDay('tasks', d); return { date: d, segments: t ? [{ value: t.done, color: 'var(--tasks)' }, { value: t.total - t.done, color: '#5f5e5a' }] : null, tip: tip(fmt.long(d), t ? `${t.done} of ${t.total} done${dm('tasks')}` : 'no data') }; }),
+    { fmtVal: (v) => `${v}` });
+
+  // Table view
+  const cell = (v) => (v == null ? '<span class="muted">no data</span>' : v);
+  $('wkTable').innerHTML = `<table class="dtable num"><thead><tr><th>Day</th><th>Life${demoLife ? ' (DEMO)' : ''}</th>${PILLARS.map((p) => `<th>${p.name}${isDemo(p.id) ? ' (DEMO)' : ''}</th>`).join('')}<th>Sleep h</th><th>HRV</th><th>RHR</th><th>Exercise</th><th>Focus h</th><th>Tasks</th></tr></thead><tbody>
+    ${dates.map((d) => { const s = pillarDay('sleep', d), r = pillarDay('recovery', d), t = pillarDay('training', d), w = pillarDay('work', d), k = pillarDay('tasks', d);
+      return `<tr><td>${fmt.long(d)}</td><td>${cell(lifeDay(d)?.score)}</td>${PILLARS.map((p) => `<td>${cell(pillarDay(p.id, d)?.score)}</td>`).join('')}
+      <td>${cell(s?.hours)}</td><td>${cell(r?.hrv)}</td><td>${cell(r?.rhr)}</td><td>${cell(t?.exerciseMin)}</td><td>${cell(w?.focusHours)}</td><td>${k ? `${k.done}/${k.total}` : cell(null)}</td></tr>`; }).join('')}
+    </tbody></table>`;
+}
+
+function renderSources() {
+  const since = (iso) => { if (!iso) return ''; const h = Math.round((Date.now() - Date.parse(iso)) / 3600000); return h < 1 ? 'just now' : h < 48 ? `${h} h ago` : `${Math.round(h / 24)} days ago`; };
+  const pillarsOf = (src) => PILLARS.filter((p) => DATA.pillars[p.id].source === src).map((p) => p.name).join(', ');
+  $('sources').innerHTML = Object.entries(DATA.sources).map(([id, s]) => `<div class="source">
+    ${s.mode === 'real' ? '<span class="st">● Connected</span>' : DEMO}
+    <div><strong>${esc(s.label)}</strong> <span class="muted">→ ${pillarsOf(id)}</span><br>
+    <span class="muted">${s.mode === 'real' ? `Synced ${since(s.fetchedAt)}${s.latestDate ? ` · newest day ${fmt.short(s.latestDate)}` : ' · no days yet'}${s.note ? ` · ${esc(s.note)}` : ''}` : 'Not connected. Showing sample data.'}</span></div>
+  </div>`).join('');
+  const w = DATA.weights;
+  $('weightsText').textContent = PILLARS.map((p) => `${p.name} ${w[p.id]}`).join(', ');
+  $('footer').textContent = `Built ${new Date(DATA.generatedAt).toLocaleString()} · ${DATA.tz} · Data stays in this file on your device.`;
+}
+
+function renderNav() {
+  $('dateLabel').textContent = selected === DATA.today ? `Today · ${fmt.short(selected)}` : fmt.long(selected);
+  $('prev').disabled = selected <= DATA.dates[0];
+  $('next').disabled = selected >= DATA.today;
+}
+
+function renderAll() {
+  renderNav(); renderBanner(); renderHero(); renderPillarRow(); renderTrend30(); renderPillarCards(); renderWeekly(); renderSources();
+}
+
+// ---------- interaction ----------
+$('prev').onclick = () => { if (selected > DATA.dates[0]) { selected = addDays(selected, -1); renderAll(); } };
+$('next').onclick = () => { if (selected < DATA.today) { selected = addDays(selected, 1); renderAll(); } };
+document.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') $('prev').click(); if (e.key === 'ArrowRight') $('next').click(); });
+document.addEventListener('click', (e) => { const go = e.target.closest('[data-go]'); if (go) $(go.dataset.go)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+
+const tipEl = $('tip');
+function showTip(e) {
+  const t = e.target.closest?.('[data-tip]');
+  if (!t || !t.dataset.tip) { tipEl.classList.remove('on'); return; }
+  tipEl.innerHTML = t.dataset.tip;
+  tipEl.classList.add('on');
+  const r = tipEl.getBoundingClientRect();
+  let x = e.clientX + 12, y = e.clientY - r.height - 12;
+  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 12;
+  if (y < 8) y = e.clientY + 16;
+  tipEl.style.left = `${Math.max(8, x)}px`; tipEl.style.top = `${y}px`;
+}
+document.addEventListener('pointermove', showTip);
+document.addEventListener('pointerdown', showTip);
+document.addEventListener('scroll', () => tipEl.classList.remove('on'), { passive: true });
+document.addEventListener('pointerleave', () => tipEl.classList.remove('on'));
+
+let resizeTimer;
+let lastW = innerWidth;
+addEventListener('resize', () => { if (innerWidth === lastW) return; lastW = innerWidth; clearTimeout(resizeTimer); resizeTimer = setTimeout(renderAll, 150); });
+
+renderAll();
+</script>
+</body>
+</html>

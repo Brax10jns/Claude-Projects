@@ -1,0 +1,17 @@
+{
+  "name": "life-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal life dashboard: sleep, recovery, training, work and tasks combined into a daily Life Score, baked into one offline HTML file.",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "health": "node src/sources/apple-health.js",
+    "calendar": "node src/sources/calendar.js",
+    "rescuetime": "node src/sources/rescuetime.js",
+    "build": "node src/build.js",
+    "refresh": "node src/refresh.js",
+    "serve": "node src/serve.js",
+    "test": "node --test"
+  }
+}

@@ -1,0 +1,4 @@
+# Personal data and secrets never leave your laptop.
+config.json
+data/
+dist/
