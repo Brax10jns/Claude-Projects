@@ -19,8 +19,18 @@ if (process.platform !== 'win32') {
 
 const lit = (s) => `'${String(s).replace(/'/g, "''")}'`; // PowerShell single-quoted string
 // -EncodedCommand sidesteps every command-line quoting rule between Node, Windows and PowerShell.
-const ps = (script) => execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
-  '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], { encoding: 'utf8' }).trim();
+// Progress output is silenced and stderr captured, so PowerShell's progress records
+// don't leak into the window as CLIXML.
+function ps(script) {
+  const encoded = Buffer.from(`$ProgressPreference = 'SilentlyContinue'\n${script}`, 'utf16le').toString('base64');
+  try {
+    return execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  } catch (e) {
+    const detail = String(e.stderr || '').replace(/#< CLIXML[\s\S]*?<\/Objs>/g, '').trim();
+    throw new Error(`PowerShell failed: ${detail || e.message}`);
+  }
+}
 
 if (process.argv.includes('--remove')) {
   ps(`Unregister-ScheduledTask -TaskName ${lit(TASK)} -Confirm:$false -ErrorAction SilentlyContinue`);
@@ -67,7 +77,7 @@ while (Date.now() < deadline) {
   state = ps(`(Get-ScheduledTask -TaskName ${lit(TASK)}).State`);
   if (state !== 'Running') break;
 }
-const log = fs.existsSync(LOG) ? fs.readFileSync(LOG, 'utf8').slice(before) : '';
+const log = fs.existsSync(LOG) ? fs.readFileSync(LOG).subarray(before).toString('utf8') : ''; // `before` is in bytes
 if (log.includes('Built ')) {
   console.log('✓ The scheduled update ran and rebuilt your dashboard. From its log:');
   for (const line of log.split('\n').filter((l) => /^(── |✗|Built|Today's Life|Latest full|No new export|New export|RescueTime:|Calendar ")/.test(l))) console.log('  ' + line);
