@@ -66,3 +66,18 @@ test('demo data never enters a real Life Score', () => {
   assert.equal(p.pillars.sleep.mode, 'demo');
   assert.ok(p.pillars.sleep.days['2026-10-26'].score != null, 'demo pillars still preview');
 });
+
+test("the export's own day is 'so far' and stays out of the Life Score", () => {
+  const days = {
+    '2026-10-26': { steps: 8000, exerciseMin: 30 },
+    '2026-10-27': { steps: 749 },
+  };
+  const p = buildPayload(config, {
+    today: '2026-10-27', tz: 'UTC',
+    read: (id) => (id === 'appleHealth' ? { fetchedAt: 'x', exportDate: '2026-10-27 17:26:01 -0500', hasExerciseRing: true, days } : null),
+  });
+  assert.deepEqual(p.life.days['2026-10-26'], { score: 100, used: ['training'] });
+  assert.equal(p.pillars.training.days['2026-10-27'].partial, true);
+  assert.equal(p.pillars.training.days['2026-10-27'].partialAt, '17:26');
+  assert.equal(p.life.days['2026-10-27'], null);
+});

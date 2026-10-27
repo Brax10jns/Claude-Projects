@@ -31,6 +31,14 @@ test('Apple Health export is reduced to daily summaries', async () => {
   assert.equal(days['2026-10-26'].sleep, undefined, 'the night counts toward the wake-up day');
 });
 
+test('sleep diagnostics cover records outside the window', async () => {
+  const { days, sleepInfo } = await parseHealthExport(fixture('export.xml'), { since: '2026-10-28', until: '2026-11-30' });
+  assert.equal(Object.keys(days).length, 0);
+  assert.equal(sleepInfo.newest, '2026-10-27');
+  assert.equal(sleepInfo.sources["Sam's Apple Watch"], 5);
+  assert.equal(sleepInfo.values.HKCategoryValueSleepAnalysisInBed, 1);
+});
+
 test('calendar tasks: time zones, recurrence, exceptions, overrides, cancellations', () => {
   const { calName, events } = parseICS(fs.readFileSync(fixture('tasks.ics'), 'utf8'));
   assert.equal(calName, 'Tasks');

@@ -198,7 +198,7 @@ footer { margin-top: 24px; font-size: 12px; color: var(--muted); text-align: cen
   </div>
 
   <section>
-    <div class="head"><h2>Today's details</h2><span class="muted" id="detailDate"></span></div>
+    <div class="head"><h2 id="detailTitle">Today's details</h2><span class="muted" id="detailDate"></span></div>
     <div class="grid two" id="pillarCards"></div>
   </section>
 
@@ -253,7 +253,12 @@ const PILLARS = [
 const P = Object.fromEntries(PILLARS.map((p) => [p.id, p]));
 const DEMO = '<span class="demo-tag" title="Sample data to preview the design. Not counted in your Life Score.">DEMO</span>';
 
+// Open on today, or on the latest fully scored day when today has no score yet.
 let selected = DATA.today;
+if (DATA.life.mode === 'real' && !DATA.life.days[DATA.today]) {
+  const last = [...DATA.dates].reverse().find((d) => DATA.life.days[d]);
+  if (last) selected = last;
+}
 
 // ---------- helpers ----------
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -410,12 +415,19 @@ function renderHero() {
   const demo = DATA.life.mode === 'demo';
   const total = DATA.life.pillars.length;
   let basis;
-  if (!l) basis = demo ? 'No DEMO data for this day.' : `No data from your connected sources for ${fmt.long(selected)}.`;
+  if (!l) {
+    const partial = DATA.life.pillars.filter((id) => pillarDay(id, selected)?.partial);
+    basis = demo ? 'No DEMO data for this day.' : partial.length
+      ? `This day is still adding up (${partial.map((id) => P[id].name).join(', ')} so far), so there's no Life Score for it yet.`
+      : `No data from your connected sources for ${fmt.long(selected)}.`;
+  }
   else {
     const used = l.used.map((id) => P[id].name).join(', ');
     basis = demo ? `DEMO preview from ${used}.` : `Based on ${used} (${l.used.length} of ${PILLARS.length} pillars).`;
-    const missing = DATA.life.pillars.filter((id) => !l.used.includes(id));
-    if (missing.length) basis += ` No data today: ${missing.map((id) => P[id].name).join(', ')}.`;
+    const missing = DATA.life.pillars.filter((id) => !l.used.includes(id) && !pillarDay(id, selected)?.partial);
+    if (missing.length) basis += ` No data ${selected === DATA.today ? 'today' : 'this day'}: ${missing.map((id) => P[id].name).join(', ')}.`;
+    const partial = DATA.life.pillars.filter((id) => pillarDay(id, selected)?.partial);
+    if (partial.length) basis += ` Still adding up (not counted): ${partial.map((id) => P[id].name).join(', ')}.`;
     const demoNames = PILLARS.filter((p) => isDemo(p.id)).map((p) => p.name);
     if (!demo && demoNames.length) basis += ` Not counted (DEMO): ${demoNames.join(', ')}.`;
   }
@@ -436,10 +448,11 @@ function renderPillarRow() {
   $('pillarRow').innerHTML = PILLARS.map((p) => {
     const d = pillarDay(p.id, selected);
     const label = d?.score != null ? d.score : d?.calibrating ? 'calibrating' : 'no data';
+    const sub = isDemo(p.id) ? DEMO : d?.partial ? '<span class="muted">so far</span>' : '';
     return `<button class="pill" data-go="pc-${p.id}" aria-label="${p.name}: ${label}${isDemo(p.id) ? ' (demo)' : ''}">
       <div class="mini">${ring(d?.score, { size: 64, stroke: 7, color: p.color })}<span class="num ${d?.score == null ? 'none' : ''}">${label}</span></div>
       <div class="name">${p.name}</div>
-      <div class="sub">${isDemo(p.id) ? DEMO : ''}</div>
+      <div class="sub">${sub}</div>
     </button>`;
   }).join('');
   animateRings($('pillarRow'));
@@ -510,13 +523,14 @@ const NO_DATA_WHY = {
 
 function renderPillarCards() {
   $('detailDate').textContent = fmt.long(selected);
+  $('detailTitle').textContent = selected === DATA.today ? "Today's details" : 'Day details';
   $('pillarCards').innerHTML = PILLARS.map((p) => {
     const d = pillarDay(p.id, selected), demo = isDemo(p.id);
     const src = SOURCE_NAME[DATA.pillars[p.id].source];
     let scoreHtml, body;
     if (d && d.score != null) {
-      scoreHtml = `<div class="pscore num">${d.score}<small> /100</small></div>`;
-      body = pillarBody(p.id, d);
+      scoreHtml = `<div class="pscore num">${d.score}<small> ${d.partial ? 'so far' : '/100'}</small></div>`;
+      body = pillarBody(p.id, d) + (d.partial ? `<div class="note">Your Apple Health export was taken at ${esc(d.partialAt)} this day, so it's still adding up. Not counted in the Life Score until you export again after the day ends.</div>` : '');
     } else if (d) {
       scoreHtml = `<div class="pscore none">${d.calibrating ? 'calibrating' : 'no data'}</div>`;
       body = pillarBody(p.id, d) + (d.belowMinimum ? `<div class="note">Under the minimum tracked time, so not scored.</div>` : '');
@@ -537,7 +551,7 @@ function renderPillarCards() {
   for (const p of PILLARS) {
     barChart($(`spark-${p.id}`), week(selected).map((dt) => {
       const v = pillarDay(p.id, dt)?.score ?? null;
-      return { date: dt, segments: v == null ? null : [{ value: v, color: p.color }], tip: tip(fmt.long(dt), v == null ? 'no data' : `${p.name} ${v}${isDemo(p.id) ? ' (DEMO)' : ''}`) };
+      return { date: dt, segments: v == null ? null : [{ value: v, color: p.color }], tip: tip(fmt.long(dt), v == null ? 'no data' : `${p.name} ${v}${pillarDay(p.id, dt)?.partial ? ' so far' : ''}${isDemo(p.id) ? ' (DEMO)' : ''}`) };
     }), { max: 100, height: 92, labelMax: false });
   }
 }

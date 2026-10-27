@@ -43,6 +43,15 @@ export function buildPayload(config, { today, tz, read = readSourceData } = {}) 
     pillars[p] = { mode: sources[src].mode, source: src, days: computePillarSeries(p, inputs[src], dates, config) };
   }
 
+  // Activity keeps adding up after the export was taken, so the export's own day
+  // is "so far": shown, but kept out of the Life Score until a later export.
+  const exportedAt = sources.appleHealth.mode === 'real' && inputs.appleHealth.exportDate;
+  if (exportedAt) {
+    const day = exportedAt.slice(0, 10), time = exportedAt.slice(11, 16);
+    const t = pillars.training.days[day];
+    if (t) Object.assign(t, { partial: true, partialAt: time });
+  }
+
   // Real pillars only, unless nothing is connected: then a DEMO Life Score from demo pillars only.
   const realOnes = PILLARS.filter((p) => pillars[p].mode === 'real');
   const lifeMode = realOnes.length ? 'real' : 'demo';
@@ -78,7 +87,9 @@ if (isMain(import.meta.url)) {
       console.log(`  ${s.mode === 'real' ? '● real' : '○ DEMO'}  ${s.label}${s.latestDate ? ` (latest day ${s.latestDate})` : ''}`);
     }
     const t = payload.life.days[payload.today];
-    console.log(`\nToday's Life Score: ${t ? t.score : 'no data'}${payload.life.mode === 'demo' ? ' (DEMO preview — nothing connected yet)' : ` from ${t ? t.used.join(', ') : 'no pillars'}`}`);
+    console.log(`\nToday's Life Score: ${t ? t.score : 'no data'}${payload.life.mode === 'demo' ? ' (DEMO preview — nothing connected yet)' : t ? ` from ${t.used.join(', ')}` : ''}`);
+    const last = [...payload.dates].reverse().find((d) => d < payload.today && payload.life.days[d]);
+    if (payload.life.mode === 'real' && last) console.log(`Latest full day: ${last} → ${payload.life.days[last].score} from ${payload.life.days[last].used.join(', ')}`);
     console.log('Open the file in your browser, or run "npm run serve" to open it on your phone.\n');
   } catch (e) {
     fail(e.message);

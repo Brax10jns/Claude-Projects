@@ -38,10 +38,10 @@ export async function syncAppleHealth(config, argPath) {
     hasExerciseRing: parsed.hasExerciseRing,
     days: parsed.days,
   });
-  report(parsed, today);
+  report(parsed, today, config);
 }
 
-function report(parsed, today) {
+function report(parsed, today, config) {
   const days = parsed.days;
   const dates = Object.keys(days);
   const count = (fn) => dates.filter((d) => fn(days[d])).length;
@@ -66,8 +66,17 @@ function report(parsed, today) {
   printTable(['Date', 'Sleep', 'Bed→Wake', 'HRV ms', 'RHR', 'Steps', 'Exercise', 'Workouts'], rows);
 
   const warn = [];
-  if (!parsed.typesSeen[HEALTH_TYPES.sleep]) warn.push('No sleep records at all. Sleep will show "no data". Turn on Sleep tracking on your Watch or in Health → Sleep.');
-  else if (!dates.some((d) => days[d].sleep?.hasStages)) warn.push('Sleep has no stages (deep/REM). Sleep score uses hours only.');
+  const nights = dates.filter((d) => days[d].sleep);
+  const si = parsed.sleepInfo;
+  const top = (o) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, n]) => `${k.replace('HKCategoryValueSleepAnalysis', '')} ×${n}`).join(', ');
+  if (!parsed.typesSeen[HEALTH_TYPES.sleep]) {
+    warn.push('No sleep records anywhere in this export, so Sleep shows "no data". To track sleep with an Apple Watch: Health app → Browse → Sleep → Get Started (or Full Schedule & Options), turn on "Track Sleep with Apple Watch", and wear the Watch to bed.');
+  } else if (!nights.length) {
+    warn.push(`The export has ${parsed.typesSeen[HEALTH_TYPES.sleep]} sleep records, but none in the last ${config.historyDays} days (newest night: ${si.newest}). Sleep shows "no data" until new nights are recorded.`);
+    warn.push(`  Sleep records by source: ${top(si.sources)}. By type: ${top(si.values)}.`);
+  } else if (!nights.some((d) => days[d].sleep.hasStages)) {
+    warn.push(`Sleep found on ${nights.length} nights, but without stages (deep/REM). Sleep score uses hours only.`);
+  }
   if (!parsed.typesSeen[HEALTH_TYPES.hrv]) warn.push('No HRV records. Recovery uses resting heart rate only (or shows "no data" without it).');
   if (!parsed.hasExerciseRing) warn.push('No Apple Watch exercise minutes. Training uses logged workouts + steps.');
   const lastData = dates[dates.length - 1];

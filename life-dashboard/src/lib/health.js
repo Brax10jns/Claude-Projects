@@ -121,6 +121,8 @@ export async function parseHealthExport(filePath, { since, until } = {}) {
   const nights = new Map();
   const workouts = [];
   const typesSeen = {};
+  // Sleep diagnostics across the whole export, so a missing pillar can be explained.
+  const sleepInfo = { newest: null, values: {}, sources: {} };
   let exportDate = null;
   let openWorkout = null;
   let lines = 0;
@@ -142,6 +144,9 @@ export async function parseHealthExport(filePath, { since, until } = {}) {
       if (a.type === TYPES.sleep) {
         const stage = SLEEP_STAGE[a.value];
         const night = nightOf(start);
+        sleepInfo.values[a.value] = (sleepInfo.values[a.value] || 0) + 1;
+        sleepInfo.sources[a.sourceName] = (sleepInfo.sources[a.sourceName] || 0) + 1;
+        if (!sleepInfo.newest || night > sleepInfo.newest) sleepInfo.newest = night;
         if (!stage || !inWindow(night)) continue;
         push(nights, night, {
           source: a.sourceName, stage, start: start.inst, end: end.inst,
@@ -208,6 +213,7 @@ export async function parseHealthExport(filePath, { since, until } = {}) {
   return {
     days: Object.fromEntries(Object.entries(days).sort(([a], [b]) => a.localeCompare(b))),
     typesSeen,
+    sleepInfo,
     exportDate,
     lines,
     hasExerciseRing: Boolean(typesSeen[TYPES.exercise]),
