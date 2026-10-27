@@ -80,14 +80,14 @@ export async function syncRescueTime(config) {
 
   const dates = Object.keys(days).sort();
   console.log(`\nRescueTime: ${dates.length} days with tracked time between ${from} and ${today}.`);
-  const hrs = (s) => (s / 3600).toFixed(1);
+  const hrs = (s) => { const m = Math.round(s / 60); return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`; };
   const rows = [];
   for (let i = 13; i >= 0; i--) {
     const date = addDays(today, -i);
     const d = days[date];
     rows.push(d ? [date, hrs(d.totalSec), hrs(d.vp + d.p), hrs(d.n), hrs(d.d + d.vd)] : [date, '—', '—', '—', '—']);
   }
-  console.log('\nLast 14 days (hours) — compare with your RescueTime dashboard:');
+  console.log('\nLast 14 days — compare with your RescueTime dashboard:');
   printTable(['Date', 'Total', 'Productive', 'Neutral', 'Distracting'], rows);
   console.log(`
 ✓ Saved ${SOURCE_FILES.rescueTime}`);
