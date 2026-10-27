@@ -5,8 +5,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import { execFileSync } from 'node:child_process';
 import { ROOT, HOME } from './lib/config.js';
+import { ps, lit } from './lib/powershell.js';
 
 const TASK = 'Life Dashboard Update';
 const LOG = path.join(HOME, 'update.log');
@@ -15,21 +15,6 @@ if (process.platform !== 'win32') {
   console.log('This sets up a Windows scheduled task. On Mac/Linux, add a cron job instead, e.g.:');
   console.log(`  15 7 * * *  cd "${ROOT}" && "${process.execPath}" src/refresh.js --log`);
   process.exit(0);
-}
-
-const lit = (s) => `'${String(s).replace(/'/g, "''")}'`; // PowerShell single-quoted string
-// -EncodedCommand sidesteps every command-line quoting rule between Node, Windows and PowerShell.
-// Progress output is silenced and stderr captured, so PowerShell's progress records
-// don't leak into the window as CLIXML.
-function ps(script) {
-  const encoded = Buffer.from(`$ProgressPreference = 'SilentlyContinue'\n${script}`, 'utf16le').toString('base64');
-  try {
-    return execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-  } catch (e) {
-    const detail = String(e.stderr || '').replace(/#< CLIXML[\s\S]*?<\/Objs>/g, '').trim();
-    throw new Error(`PowerShell failed: ${detail || e.message}`);
-  }
 }
 
 if (process.argv.includes('--remove')) {

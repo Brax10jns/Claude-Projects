@@ -31,7 +31,9 @@ Everything below can be done by **double-clicking the `.cmd` files** in this fol
 | `Update Dashboard.cmd` | Re-syncs everything (including a new Health export), rebuilds, opens the dashboard |
 | `Schedule Daily Update.cmd` | Runs that update automatically every day (Windows Task Scheduler) |
 | `Stop Daily Update.cmd` | Removes the daily schedule |
-| `Open on Phone.cmd` | Serves the dashboard on your Wi-Fi so your iPhone can open it |
+| `Phone Access On.cmd` | Always-on, private phone access from anywhere through Tailscale |
+| `Phone Access Off.cmd` | Turns that off |
+| `Open on Phone.cmd` | Serves the dashboard on your Wi-Fi only while its window is open |
 
 If Windows shows "Windows protected your PC" the first time, click **More info → Run anyway**.
 
@@ -85,7 +87,19 @@ If the laptop is off or asleep at that time, it runs as soon as it wakes. It run
 
 **By hand:** double-click `Update Dashboard.cmd` (or `npm run refresh`) whenever you want to update now.
 
-**On your phone.** Double-click **`Open on Phone.cmd`** (or `npm run serve`). On your iPhone, on the same Wi-Fi, open the `http://192.168.x.x:8787` link it shows in Safari, then Share → **Add to Home Screen**. It runs full-screen with its own icon. The page loads from your laptop while that window is open, so open it at home to see new data. If Windows asks whether Node.js may use the network, allow **Private networks**.
+## On your phone
+
+**Anywhere (recommended): Tailscale.** [Tailscale](https://tailscale.com) is a free private network that connects only your own devices. Your phone reaches the laptop directly, at home or on cellular, and your data never goes to a hosting service.
+
+1. Install Tailscale on the laptop ([download](https://tailscale.com/download/windows)) and on your iPhone (App Store). Sign in to both with the same account.
+2. Double-click **`Phone Access On.cmd`**. It starts a small hidden server now and at every login. It prints your link, e.g. `http://100.x.y.z:8787`, and checks that it answers.
+3. On the iPhone, with Tailscale connected, open that link in Safari, then Share → **Add to Home Screen**.
+
+The server listens **only** on your Tailscale address and on the laptop itself, never on the Wi-Fi you're connected to, so nobody on a shared network can reach it. The laptop must be on and online. The page reloads itself when you reopen it after 10+ minutes, so it shows the latest daily update. `Phone Access Off.cmd` stops the server and removes it from startup. Server messages go to `LifeDashboard\phone-server.log`.
+
+If the phone can't open the link but the laptop can, Windows Firewall is probably blocking it. Allow Node.js when Windows asks, or check Windows Security → Firewall → Allow an app.
+
+**Home Wi-Fi only, no install:** double-click `Open on Phone.cmd` and open the `192.168.x.x` link it shows. It works only while that window is open, and anyone on the same Wi-Fi who knows the address can see it.
 
 ## How scores work
 
@@ -110,6 +124,7 @@ src/build.js   scores + template.html → LifeDashboard/life-dashboard.html
 src/connect.js prompt for a link/key, save it, sync, build (used by the .cmd files)
 src/refresh.js daily update: new Health export from Downloads/OneDrive, calendar, RescueTime, build
 src/schedule.js registers/removes the Windows scheduled task
-src/serve.js   serves the dashboard on your Wi-Fi for the phone
+src/serve.js   serves the dashboard for the phone (Wi-Fi window, or Tailscale-only background)
+src/phone.js   turns always-on Tailscale phone access on/off
 test/          npm test (synthetic fixtures only)
 ```

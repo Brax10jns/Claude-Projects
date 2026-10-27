@@ -81,3 +81,16 @@ test("the export's own day is 'so far' and stays out of the Life Score", () => {
   assert.equal(p.pillars.training.days['2026-10-27'].partialAt, '17:26');
   assert.equal(p.life.days['2026-10-27'], null);
 });
+
+test('Tailscale addresses are recognised (100.64.0.0/10 only)', async () => {
+  const { tailscaleIPv4, lanIPv4s, isTailscale } = await import('../src/lib/net.js');
+  const ifaces = {
+    Wi_Fi: [{ address: '192.168.1.50', family: 'IPv4', internal: false }],
+    Tailscale: [{ address: '100.101.102.103', family: 'IPv4', internal: false }, { address: 'fd7a::1', family: 'IPv6', internal: false }],
+    lo: [{ address: '127.0.0.1', family: 'IPv4', internal: true }],
+  };
+  assert.equal(tailscaleIPv4(ifaces), '100.101.102.103');
+  assert.deepEqual(lanIPv4s(ifaces), ['192.168.1.50']);
+  assert.ok(!isTailscale('100.63.0.1') && !isTailscale('100.128.0.1') && isTailscale('100.64.0.1'));
+  assert.equal(tailscaleIPv4({ Wi_Fi: ifaces.Wi_Fi }), null);
+});

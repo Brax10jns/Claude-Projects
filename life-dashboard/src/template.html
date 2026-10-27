@@ -708,6 +708,13 @@ document.addEventListener('pointerdown', showTip);
 document.addEventListener('scroll', () => tipEl.classList.remove('on'), { passive: true });
 document.addEventListener('pointerleave', () => tipEl.classList.remove('on'));
 
+// Opened from the iPhone home screen there's no pull-to-refresh, so reload when
+// coming back after a while (only when served by the laptop, not as a local file).
+const loadedAt = Date.now();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && location.protocol.startsWith('http') && Date.now() - loadedAt > 10 * 60 * 1000) location.reload();
+});
+
 let resizeTimer;
 let lastW = innerWidth;
 addEventListener('resize', () => { if (innerWidth === lastW) return; lastW = innerWidth; clearTimeout(resizeTimer); resizeTimer = setTimeout(renderAll, 150); });
