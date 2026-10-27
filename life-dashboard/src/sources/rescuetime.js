@@ -1,6 +1,6 @@
 // Pulls daily time by productivity level from RescueTime into data/rescuetime.json.
 //   npm run rescuetime        (key from config.json → rescueTime.apiKey or RESCUETIME_API_KEY)
-import { loadConfig, writeSourceData, fail } from '../lib/config.js';
+import { loadConfig, writeSourceData, fail, SOURCE_FILES } from '../lib/config.js';
 import { addDays, resolveTimeZone, todayIn } from '../lib/time.js';
 import { printTable, isMain } from '../lib/report.js';
 
@@ -8,7 +8,7 @@ const LEVEL = { 2: 'vp', 1: 'p', 0: 'n', '-1': 'd', '-2': 'vd' };
 
 export async function syncRescueTime(config) {
   const key = process.env.RESCUETIME_API_KEY || config.rescueTime.apiKey;
-  if (!key) throw new Error('No RescueTime key. Create one at https://www.rescuetime.com/anapi/manage and put it in config.json → rescueTime.apiKey (see README, step 3).');
+  if (!key) throw new Error('No RescueTime key. Create one at https://www.rescuetime.com/anapi/manage then double-click "Connect RescueTime.cmd" and paste it (see README, step 3).');
   const tz = resolveTimeZone(config);
   const today = todayIn(tz);
   const from = addDays(today, -config.historyDays);
@@ -56,7 +56,8 @@ export async function syncRescueTime(config) {
   }
   console.log('\nLast 14 days (hours) — compare with your RescueTime dashboard:');
   printTable(['Date', 'Total', 'Productive', 'Neutral', 'Distracting'], rows);
-  console.log('\n✓ Saved data/rescuetime.json. Next: npm run build');
+  console.log(`
+✓ Saved ${SOURCE_FILES.rescueTime}`);
 }
 
 if (isMain(import.meta.url)) {

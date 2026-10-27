@@ -43,7 +43,7 @@ export function isValidTimeZone(tz) {
 export function resolveTimeZone(config) {
   const tz = config.timezone;
   if (tz && tz !== 'auto') {
-    if (!isValidTimeZone(tz)) throw new Error(`Unknown timezone "${tz}" in config.json`);
+    if (!isValidTimeZone(tz)) throw new Error(`Unknown timezone "${tz}" in your config.json`);
     return tz;
   }
   return Intl.DateTimeFormat().resolvedOptions().timeZone;

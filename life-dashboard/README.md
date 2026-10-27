@@ -2,7 +2,7 @@
 
 A personal dashboard in the style of WHOOP or Oura, covering your whole day: **sleep, recovery, training, work and tasks**. The five pillars combine into one **Life Score (0–100)**, shown as a big ring, plus a **weekly review** with charts.
 
-Local scripts fetch your data, compute every score and bake the result into **one self-contained HTML file** (`dist/life-dashboard.html`). It works offline. Open it on your laptop or add it to your phone's home screen.
+Local scripts fetch your data, compute every score and bake the result into **one self-contained HTML file** (`LifeDashboard\life-dashboard.html` in your user folder). It works offline. Open it on your laptop or add it to your phone's home screen.
 
 | Pillar | Source | What's measured |
 | --- | --- | --- |
@@ -14,19 +14,23 @@ Local scripts fetch your data, compute every score and bake the result into **on
 
 **Real vs DEMO.** A source you haven't connected shows clearly labeled **DEMO** data so you can preview the design. DEMO pillars are never counted in your Life Score. A connected source with nothing recorded for a day shows **no data** for that day, never a made-up value.
 
-**Privacy.** Your data, keys and the built dashboard live in `config.json`, `data/` and `dist/`. All three are gitignored and stay on your laptop.
+**Your folder.** Your settings (`config.json`), synced data (`data\`) and the built dashboard live in **`C:\Users\<you>\LifeDashboard`** (`~/LifeDashboard` on Mac), outside the code. You can re-download or update the code any time without losing anything. Set `LIFE_DASHBOARD_HOME` to use a different folder. Nothing in it is ever committed, and it stays on your laptop.
 
 ## Setup (once)
 
-You need [Node.js 18+](https://nodejs.org). There's nothing else to install.
+1. Install [Node.js](https://nodejs.org) (the LTS version). There's nothing else to install.
+2. Download this folder (on GitHub: **Code → Download ZIP**, then Extract All) or `git clone` it.
 
-```powershell
-cd Claude-Projects\life-dashboard
-copy config.example.json config.json
-npm run build            # DEMO preview → dist\life-dashboard.html
-```
+Everything below can be done by **double-clicking the `.cmd` files** in this folder. You never need to type commands. The first run creates `LifeDashboard\config.json`, where you can change your goals (`sleepHours`, `exerciseMinutes`, `steps`, `focusHours`) and pillar `weights`. `timezone` defaults to your laptop's.
 
-In `config.json`, set your goals (`sleepHours`, `exerciseMinutes`, `steps`, `focusHours`) and pillar `weights`. `timezone` defaults to your laptop's.
+| Double-click | What it does |
+| --- | --- |
+| `Connect Apple Health.cmd` | Imports the newest Health export zip in Downloads |
+| `Connect Calendar.cmd` | Asks for your Tasks calendar link, syncs it |
+| `Connect RescueTime.cmd` | Asks for your RescueTime API key, syncs it |
+| `Update Dashboard.cmd` | Re-syncs calendar + RescueTime, rebuilds, opens the dashboard |
+
+If Windows shows "Windows protected your PC" the first time, click **More info → Run anyway**.
 
 ## Connect sources (one at a time)
 
@@ -53,10 +57,7 @@ Notes: a night counts toward the day you wake up. When your iPhone and Watch bot
 
 1. Create a calendar named **Tasks** if you don't have one. Every event in it is a task. When you finish one, edit the title to add **✓** (or `[x]`).
 2. Share it as a link. On iPhone: Calendar → Calendars → ⓘ next to Tasks → turn on **Public Calendar** → Share Link → Copy. On Mac: Calendar → right-click Tasks → Share Calendar → **Public**.
-3. Put the link (starts with `webcal://`) in `config.json` → `calendar.icsUrl`, then:
-   ```powershell
-   npm run calendar
-   ```
+3. Get the link (it starts with `webcal://`) onto your laptop, for example by emailing it to yourself. Then double-click **`Connect Calendar.cmd`** and paste it. (Command line: `npm run calendar -- "<link>"`.)
    The link is unguessable, but anyone who has it can read that calendar. Only that one calendar is shared.
 
 Recurring events, deleted occurrences and edited single occurrences are handled. To mark one instance of a repeating task as done, edit only that event.
@@ -64,22 +65,17 @@ Recurring events, deleted occurrences and edited single occurrences are handled.
 ### 3. RescueTime (work)
 
 1. Create an API key at <https://www.rescuetime.com/anapi/manage>.
-2. Put it in `config.json` → `rescueTime.apiKey` (or set the `RESCUETIME_API_KEY` environment variable), then:
-   ```powershell
-   npm run rescuetime
-   ```
+2. Double-click **`Connect RescueTime.cmd`** and paste the key. (Or set it in `config.json` → `rescueTime.apiKey`, or the `RESCUETIME_API_KEY` environment variable, and run `npm run rescuetime`.)
 
 Days with less than `work.minTrackedMinutes` of tracked time (default 30) show no data, not a low score.
 
 ## Daily use
 
-```powershell
-npm run refresh          # re-sync every configured source, then build
-```
+Double-click **`Update Dashboard.cmd`** (or run `npm run refresh`). It re-syncs the calendar and RescueTime, rebuilds and opens the dashboard.
 
-For Apple Health, export again from the phone when you want new days. `refresh` skips the export if it hasn't changed.
+For new Apple Health days, export again from the phone and double-click `Connect Apple Health.cmd`. Export after the day is over: activity on the export's own day is shown as "so far" and isn't counted in the Life Score until a later export.
 
-**On your phone.** Run `npm run serve`, open the printed `http://192.168.x.x:8787` link in Safari on the same Wi-Fi, then Share → **Add to Home Screen**. It runs full-screen with its own icon. The page loads from your laptop while `serve` is running, so refresh it at home to get new data.
+**On your phone.** Run `npm run serve` in this folder, open the printed `http://192.168.x.x:8787` link in Safari on the same Wi-Fi, then Share → **Add to Home Screen**. It runs full-screen with its own icon. The page loads from your laptop while `serve` is running, so refresh it at home to get new data.
 
 ## How scores work
 
@@ -100,6 +96,7 @@ src/sources/   apple-health.js, calendar.js, rescuetime.js   fetch + verify → 
 src/lib/       Apple Health stream parser, iCalendar parser, time zones, config
 src/scores.js  all scoring
 src/demo.js    DEMO data for unconnected sources
-src/build.js   scores + template.html → dist/life-dashboard.html
+src/build.js   scores + template.html → LifeDashboard/life-dashboard.html
+src/connect.js prompt for a link/key, save it, sync, build (used by the .cmd files)
 test/          npm test (synthetic fixtures only)
 ```

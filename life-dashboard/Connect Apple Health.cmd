@@ -10,7 +10,6 @@ rem Or drag the zip, or the extracted apple_health_export folder, onto this file
 where node >nul 2>nul
 if errorlevel 1 goto :nonode
 
-if not exist config.json copy config.example.json config.json >nul
 
 set "SRC=%~1"
 if defined SRC goto :havesrc
@@ -50,7 +49,7 @@ if defined TMPDIR rmdir /s /q "!TMPDIR!" 2>nul
 if not "!RC!"=="0" goto :end
 node src\build.js
 if errorlevel 1 goto :end
-start "" "%~dp0dist\life-dashboard.html"
+start "" "%USERPROFILE%\LifeDashboard\life-dashboard.html"
 echo.
 echo Done. Copy everything above this line and paste it to Claude.
 goto :end

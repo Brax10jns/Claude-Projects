@@ -5,13 +5,12 @@
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { loadConfig, SOURCE_FILES, fail } from './lib/config.js';
+import { loadConfig, SOURCE_FILES } from './lib/config.js';
 import { syncAppleHealth } from './sources/apple-health.js';
 import { syncCalendar } from './sources/calendar.js';
 import { syncRescueTime } from './sources/rescuetime.js';
 
 const config = loadConfig();
-if (!config._hasUserConfig) fail('No config.json yet. Copy config.example.json to config.json first (see README).');
 
 const jobs = [];
 const exportPath = config.appleHealth.exportPath;

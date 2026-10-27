@@ -1,4 +1,4 @@
-// Serves dist/life-dashboard.html on your home Wi-Fi so your phone can open it
+// Serves ~/LifeDashboard/life-dashboard.html on your home Wi-Fi so your phone can open it
 // and add it to the home screen. Only runs while this command is running.
 //   npm run serve
 import http from 'node:http';

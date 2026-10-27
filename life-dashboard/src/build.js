@@ -1,5 +1,5 @@
 // Scores every day and bakes the result into one self-contained HTML file:
-//   dist/life-dashboard.html
+//   ~/LifeDashboard/life-dashboard.html (see src/lib/config.js)
 // Connected sources (a file in data/) are real; the rest get DEMO data, which is
 // kept in separate, labeled series and never counted in a real Life Score.
 import fs from 'node:fs';

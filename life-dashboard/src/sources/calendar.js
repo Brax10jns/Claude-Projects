@@ -3,7 +3,7 @@
 //   npm run calendar                     (uses calendar.icsUrl or calendar.icsFile from config.json)
 //   npm run calendar -- "<webcal link or .ics file>"
 import fs from 'node:fs';
-import { loadConfig, writeSourceData, fail } from '../lib/config.js';
+import { loadConfig, writeSourceData, fail, SOURCE_FILES } from '../lib/config.js';
 import { parseICS, expandEvents, isDone, cleanTitle } from '../lib/ics.js';
 import { addDays, resolveTimeZone, todayIn } from '../lib/time.js';
 import { printTable, isMain } from '../lib/report.js';
@@ -26,7 +26,7 @@ async function readCalendar(where) {
 
 export async function syncCalendar(config, arg) {
   const where = arg || config.calendar.icsUrl || config.calendar.icsFile;
-  if (!where) throw new Error('No calendar set. Put your public iCloud link in config.json → calendar.icsUrl (see README, step 2).');
+  if (!where) throw new Error('No calendar set. Double-click "Connect Calendar.cmd" and paste your public iCloud link (see README, step 2).');
   const text = await readCalendar(where);
   if (!text.includes('BEGIN:VCALENDAR')) throw new Error('That link did not return a calendar (.ics). Copy the "Public Calendar" link again.');
 
@@ -64,7 +64,8 @@ export async function syncCalendar(config, arg) {
     console.log('\nLast 14 days — compare with your Tasks calendar:');
     printTable(['Date', 'Done', 'Tasks'], rows);
   }
-  console.log('\n✓ Saved data/calendar.json. Next: npm run build');
+  console.log(`
+✓ Saved ${SOURCE_FILES.calendar}`);
 }
 
 if (isMain(import.meta.url)) {

@@ -4,7 +4,7 @@
 // against the Health app before you build.
 import fs from 'node:fs';
 import path from 'node:path';
-import { loadConfig, writeSourceData, fail } from '../lib/config.js';
+import { loadConfig, writeSourceData, fail, SOURCE_FILES } from '../lib/config.js';
 import { parseHealthExport, HEALTH_TYPES } from '../lib/health.js';
 import { addDays, resolveTimeZone, todayIn } from '../lib/time.js';
 import { printTable, isMain } from '../lib/report.js';
@@ -82,7 +82,8 @@ function report(parsed, today, config) {
   const lastData = dates[dates.length - 1];
   if (lastData < addDays(today, -2)) warn.push(`Newest data is ${lastData}. Export again from the Health app to get recent days.`);
   if (warn.length) console.log('\nNotes:\n' + warn.map((w) => `  • ${w}`).join('\n'));
-  console.log('\n✓ Saved data/apple-health.json. Next: npm run build');
+  console.log(`
+✓ Saved ${SOURCE_FILES.appleHealth}`);
 }
 
 if (isMain(import.meta.url)) {

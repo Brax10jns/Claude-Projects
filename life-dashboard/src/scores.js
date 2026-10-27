@@ -127,8 +127,8 @@ export function computePillarSeries(pillar, input, dates, config) {
 }
 
 // Life Score: weighted mean of the pillars that have a score that day, with
-// the weights of missing pillars redistributed. Partial (still-running) days are left out. Callers pass only pillars of
-// one kind (all real, or all demo) so demo values never enter a real score.
+// the weights of missing pillars redistributed. Partial (still-running) days
+// are left out. Callers pass only pillars of one kind (all real, or all demo) so demo values never enter a real score.
 export function computeLife(pillarSeries, dates, weights) {
   const out = {};
   for (const date of dates) {
