@@ -1,0 +1,22 @@
+{
+  "name": "essay-gauntlet",
+  "version": "1.0.0",
+  "description": "Screens an essay against its assignment, then runs it past a classmate, a teacher or professor, a seasoned writer and a renowned expert on the topic, and walks you through fixing every flag.",
+  "type": "module",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "set-key": "powershell -NoProfile -ExecutionPolicy Bypass -File set-api-key.ps1",
+    "remove-key": "powershell -NoProfile -ExecutionPolicy Bypass -File set-api-key.ps1 -Remove",
+    "open": "powershell -NoProfile -ExecutionPolicy Bypass -File launch.ps1",
+    "install-shortcuts": "powershell -NoProfile -ExecutionPolicy Bypass -File install-shortcuts.ps1",
+    "remove-shortcuts": "powershell -NoProfile -ExecutionPolicy Bypass -File install-shortcuts.ps1 -Remove"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.132.1"
+  }
+}
